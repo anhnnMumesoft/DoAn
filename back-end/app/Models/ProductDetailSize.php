@@ -24,5 +24,8 @@ class ProductDetailSize extends Model
     {
         return $this->attributes['size_id']; // Directly return the size_id from the model's attributes
     }
-
+    public function productDetail()
+    {
+        return $this->belongsTo(ProductDetail::class, 'productdetail_id', 'id');
+    }
 }

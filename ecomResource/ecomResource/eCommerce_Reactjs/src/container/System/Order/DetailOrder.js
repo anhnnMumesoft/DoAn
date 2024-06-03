@@ -133,7 +133,7 @@ function DetailOrder(props) {
                                     <div className="content-center">
                                         <span>
 
-                                            {DataOrder.addressUser.shipAdress}
+                                            {DataOrder.addressUser.ship_address}
                                         </span>
                                     </div>
                                 </>

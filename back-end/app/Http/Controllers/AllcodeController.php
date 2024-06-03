@@ -6,8 +6,6 @@ use Illuminate\Http\Request;
 use App\Services\AllCodeService;
 use Illuminate\Routing\Controller;
 
-// Assume you have a similar service in Laravel
-
 class AllcodeController extends Controller
 {
     protected $allCodeService;
@@ -22,7 +20,7 @@ class AllcodeController extends Controller
         try {
             $data = $this->allCodeService->handleCreateNewAllCode($request->all());
             return response()->json($data, 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['errCode' => -1, 'errMessage' => 'Error from server'], 200);
         }
     }
@@ -32,7 +30,7 @@ class AllcodeController extends Controller
         try {
             $data = $this->allCodeService->getAllCodeService($request->query('type'));
             return response()->json($data, 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['errCode' => -1, 'errMessage' => 'Error from server'], 200);
         }
     }

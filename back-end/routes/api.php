@@ -7,6 +7,8 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\ShopCartController;
+use App\Http\Controllers\StatisticController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TypeShipController;
 use App\Http\Controllers\UserControllers;
@@ -187,3 +189,19 @@ Route::put('/confirm-order', [OrderController::class, 'confirmOrder']);
 Route::get('/get-all-order-by-shipper', [OrderController::class, 'getAllOrdersByShipper']);
 Route::post('/vnpay_return', [OrderController::class, 'confirmOrderVnpay']);
 Route::put('/update-image-order', [OrderController::class, 'updateImageOrder']);
+
+Route::middleware(['verify.admin'])->group(function () {
+    Route::get('/get-count-card-statistic', [StatisticController::class, 'getCountCardStatistic']);
+    Route::get('/get-count-status-order', [StatisticController::class, 'getCountStatusOrder']);
+    Route::get('/get-statistic-by-month', [StatisticController::class, 'getStatisticByMonth']);
+    Route::get('/get-statistic-by-day', [StatisticController::class, 'getStatisticByDay']);
+    Route::get('/get-statistic-overturn', [StatisticController::class, 'getStatisticOverturn']);
+    Route::get('/get-statistic-profit', [StatisticController::class, 'getStatisticProfit']);
+    Route::get('/get-statistic-stock-product', [StatisticController::class, 'getStatisticStockProduct']);
+});
+
+Route::middleware(['verify.user'])->group(function () {
+    Route::post('/add-shopcart', [ShopCartController::class, 'addShopCart']);
+    Route::get('/get-all-shopcart-by-userId', [ShopCartController::class, 'getAllShopCartByUserId']);
+    Route::delete('/delete-item-shopcart', [ShopCartController::class, 'deleteItemShopCart']);
+});

@@ -20,7 +20,7 @@ class ProductDetail extends Model
     protected $appends = ['productDetailSize'];
     public function product()
     {
-        return $this->belongsTo(Product::class, 'product_id', 'id');
+        return $this->belongsTo(Product::class, 'productId', 'id');
     }
 
     public function productImages()
