@@ -24,13 +24,16 @@ function PaymentSuccess(props) {
     useEffect(() => {
         let orderData =  JSON.parse(localStorage.getItem("orderData"))
         localStorage.removeItem("orderData")
+ 
         if(orderData){
             orderData.paymentId = query.get("paymentId")
             orderData.token = query.get("token")
             orderData.PayerID = query.get("PayerID")
-    
+            console.log(orderData)
             createNewOrder(orderData)
         }
+        console.log(orderData);
+        
     }, [])
     let createNewOrder = async (data) =>{
         let res = await paymentOrderSuccessService(data)

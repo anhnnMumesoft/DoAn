@@ -32,4 +32,22 @@ class OrderController extends Controller
         $result = $this->orderService->updateStatusOrder($data);
         return response()->json($result);
     }
+    public function paymentOrder(Request $request)
+    {
+        $data = $request->all();
+        $result = $this->orderService->paymentOrder($data);
+        return response()->json($result);
+    }
+    public function paymentOrderSuccess (Request $request)
+    {
+        $data = $request->all();
+        $result = $this->orderService->executePayment($data);
+        return response()->json($result);
+    }
+    public function getAllOrdersByUser(Request $request)
+    {
+        $userId = $request->userId; // Assuming you're getting the user ID from authenticated user
+        $result = $this->orderService->getAllOrdersByUser($userId);
+        return response()->json($result);
+    }
 }

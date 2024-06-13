@@ -201,4 +201,30 @@ class BlogService
             ];
         }
     }
+    public function getNewBlog($data)
+    {
+        try {
+            $blogs = Blog::with(['subjectData'])
+                ->where('statusId', 'S1')
+                ->orderBy('created_at', 'desc')
+                ->limit($data['limit'])
+                ->get();
+
+            foreach ($blogs as $blog) {
+                $blog->image = $blog->image;
+                $blog->userData = User::find($blog->userId);
+                $blog->commentData = Comment::where('blogId', $blog->id)->get();
+            }
+
+            return [
+                'errCode' => 0,
+                'data' => $blogs
+            ];
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => 'Error from server: ' . $e->getMessage()
+            ];
+        }
+    }
 }

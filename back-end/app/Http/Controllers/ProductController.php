@@ -72,6 +72,12 @@ class ProductController extends Controller
             return response()->json(['errCode' => -1, 'errMessage' => 'Error from server'], 500);
         }
     }
+    public function updateProduct(Request $request)
+    {
+        $data = $request->all();
+        $result = $this->productService->updateProduct($data);
+        return response()->json($result);
+    }
 
     public function getDetailProductById(Request $request)
     {
@@ -170,6 +176,26 @@ class ProductController extends Controller
         $result = $this->productService->deleteProductDetail($request->id);
         return response()->json($result);
     }
+
+    public function getProductRecommend(Request $request)
+    {
+        $data = $request->only(['userId', 'limit']);
+        $result = $this->productService->getProductRecommend($data);
+        return response()->json($result);
+    }
+    public function getProductFeature(Request $request)
+    {
+        $limit = $request->input('limit', 10); // Default limit to 10 if not specified
+        $result = $this->productService->getProductFeature($limit);
+        return response()->json($result);
+    }
+    public function getProductNew(Request $request)
+    {
+        $limit = $request->input('limit', 10); // Default limit to 10 if not specified
+        $result = $this->productService->getProductNew($limit);
+        return response()->json($result);
+    }
+
 
 
 }

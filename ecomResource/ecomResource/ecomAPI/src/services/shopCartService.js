@@ -96,7 +96,7 @@ let addShopCart = (data) => {
                 }
                 resolve({
                     errCode: 0,
-                    errMessage: 'ok'
+                    errMessage: 'ok' 
                 })
             }
         } catch (error) {

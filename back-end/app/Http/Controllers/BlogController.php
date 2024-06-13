@@ -43,4 +43,10 @@ class BlogController extends Controller
         $result = $this->blogService->deleteBlog($id);
         return response()->json($result);
     }
+    public function getNewBlog(Request $request)
+    {
+        $data = $request->only(['limit']);
+        $result = $this->blogService->getNewBlog($data);
+        return response()->json($result);
+    }
 }

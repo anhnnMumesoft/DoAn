@@ -350,6 +350,91 @@ class VoucherService
             ];
         }
     }
+    public function saveUserVoucher($data)
+    {
+        if (empty($data['voucherId']) || empty($data['userId'])) {
+            return [
+                'errCode' => 1,
+                'errMessage' => 'Missing required parameter!'
+            ];
+        }
+
+        try {
+            $voucherUsed = VoucherUsed::where('voucherId', $data['voucherId'])
+                ->where('userId', $data['userId'])
+                ->first();
+
+            if ($voucherUsed) {
+                return [
+                    'errCode' => 2,
+                    'errMessage' => 'Voucher already saved in the repository!'
+                ];
+            } else {
+                VoucherUsed::create([
+                    'voucherId' => $data['voucherId'],
+                    'userId' => $data['userId']
+                ]);
+
+                // Assuming you need to update or perform some action on the voucher
+                $voucher = Voucher::find($data['voucherId']);
+                if ($voucher) {
+                    // Perform necessary updates or checks
+                    $voucher->save();
+                }
+
+                return [
+                    'errCode' => 0,
+                    'errMessage' => 'ok'
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => 'Error from server: ' . $e->getMessage()
+            ];
+        }
+    }
+    public function getAllVoucherByUserId($data)
+    {
+        if (empty($data['id'])) {
+            return [
+                'errCode' => 1,
+                'errMessage' => 'Missing required parameter!'
+            ];
+        }
+
+        try {
+            $query = VoucherUsed::with(['voucher.typeVoucher.typeVoucherData'])
+                ->where('userId', $data['id'])
+                ->where('status', 0);
+            $queryCount = VoucherUsed::with(['voucher.typeVoucher.typeVoucherData'])
+                ->where('userId', $data['id'])
+                ->where('status', 0);
+
+            if (!empty($data['limit'])) {
+                $query->limit($data['limit'])->offset($data['offset']);
+            }
+
+            $voucherUseds = $query->get();
+
+            foreach ($voucherUseds as $voucherUsed) {
+                $voucherUsed->voucherData = $voucherUsed->voucher;
+                $voucherUsed->voucher->usedAmount = VoucherUsed::where('voucherId', $voucherUsed->voucherId )
+                    ->where('status', 1)
+                    ->count();
+            }
+            return [
+                'errCode' => 0,
+                'data' => $voucherUseds,
+                'count' => $queryCount->get()->count()
+            ];
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => 'Error from server: ' . $e->getMessage()
+            ];
+        }
+    }
 
 
 }

@@ -15,7 +15,7 @@ function NewProductFeature(props) {
                             {props.data && props.data.length > 0 &&
                                 props.data.map((item, index) => {
                                     return (
-                                        <ItemProduct id={item.id} type="col-lg-3 col-md-3" name={item.name} img={item.productDetail[0].productImage[0].image}
+                                        <ItemProduct id={item.id} type="col-lg-3 col-md-3" name={item.name} img={item.productDetail[0].productImages[0].image}
                                             price={item.productDetail[0].originalPrice} discountPrice={item.productDetail[0].discountPrice}>
                                         </ItemProduct>
                                     )

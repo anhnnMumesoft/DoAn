@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class ShopCart extends Model
 {
     use HasFactory;
-    protected $table = 'shop_carts'; // Tên bảng trong database, chỉ cần nếu tên bảng không tuân theo quy tắc đặt tên của Laravel
+    protected $table = 'shopcarts'; // Tên bảng trong database, chỉ cần nếu tên bảng không tuân theo quy tắc đặt tên của Laravel
 
     protected $fillable = [
         'userId', 'productdetailsizeId', 'quantity', 'statusId'

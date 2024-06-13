@@ -17,7 +17,7 @@ class ProductDetail extends Model
         'discountPrice',
         'description'
     ];
-    protected $appends = ['productDetailSize'];
+//    protected $appends = ['productDetailSize'];
     public function product()
     {
         return $this->belongsTo(Product::class, 'productId', 'id');
@@ -27,12 +27,12 @@ class ProductDetail extends Model
     {
         return $this->hasMany(ProductImage::class, 'product_detail_id');
     }
-    public function productDetailSizes()
-    {
-        return $this->hasMany(ProductDetailSize::class, 'productdetail_id');
-    }
-    public function getProductDetailSizeAttribute()
-    {
-        return $this->productDetailSizes()->get();
-    }
+//    public function productDetailSizes()
+//    {
+//        return $this->hasMany(ProductDetailSize::class, 'productdetail_id');
+//    }
+//    public function getProductDetailSizeAttribute()
+//    {
+//        return $this->productDetailSizes()->get();
+//    }
 }

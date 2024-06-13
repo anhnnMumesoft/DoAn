@@ -74,8 +74,8 @@ function InfoDetailProduct(props) {
                     <div id="carouselExampleIndicators" className="carousel slide" data-ride="carousel">
                         <div>
                             <ol className="carousel-indicators">
-                                {arrDetail && arrDetail.productImage && arrDetail.productImage.length > 0 &&
-                                    arrDetail.productImage.map((item, index) => {
+                                {arrDetail && arrDetail.productImages && arrDetail.productImages.length > 0 &&
+                                    arrDetail.productImages.map((item, index) => {
                                         if (index === 0) {
                                             return (
                                                 <li data-target="#carouselExampleIndicators" data-slide-to={index} className="active">
@@ -98,8 +98,8 @@ function InfoDetailProduct(props) {
                         </div>
                         <div className="carousel-inner">
 
-                            {arrDetail && arrDetail.productImage && arrDetail.productImage.length > 0 &&
-                                arrDetail.productImage.map((item, index) => {
+                            {arrDetail && arrDetail.productImages && arrDetail.productImages.length > 0 &&
+                                arrDetail.productImages.map((item, index) => {
                                     if (index === 0) {
                                         return (
 

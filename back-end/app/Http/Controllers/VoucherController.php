@@ -83,6 +83,17 @@ class VoucherController extends Controller
         $result = $this->voucherService->deleteVoucher($id);
         return response()->json($result);
     }
-
+    public function saveUserVoucher(Request $request)
+    {
+        $data = $request->all();
+        $result = $this->voucherService->saveUserVoucher($data);
+        return response()->json($result);
+    }
+    public function getAllVoucherByUserId(Request $request)
+    {
+        $data = $request->all();
+        $result = $this->voucherService->getAllVoucherByUserId($data);
+        return response()->json($result);
+    }
 
 }

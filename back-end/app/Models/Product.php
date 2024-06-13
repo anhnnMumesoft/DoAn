@@ -12,7 +12,7 @@ class Product extends Model
     protected $fillable = [
         'name', 'contentHTML', 'contentMarkdown', 'statusId', 'categoryId', 'view', 'madeby', 'material', 'brandId'
     ];
-    protected $appends = ['categoryData', 'brandData','statusData','productDetail'];
+    protected $appends = ['categoryData', 'brandData','statusData'];
 
     public function categoryData()
     {
@@ -29,10 +29,10 @@ class Product extends Model
         return $this->belongsTo(Allcode::class, 'statusId', 'code');
     }
 
-    public function productDetails()
-    {
-        return $this->hasMany(ProductDetail::class, 'productId');
-    }
+//    public function productDetails()
+//    {
+//        return $this->hasMany(ProductDetail::class, 'productId');
+//    }
     public function getCategoryDataAttribute()
     {
         $category = $this->categoryData()->first();
@@ -50,9 +50,10 @@ class Product extends Model
         $status = $this->statusData()->first();
         return $status ? ['id' => $status->id, 'value' => $status->value, 'code' => $status->code] : ['value' => null, 'code' => null];
     }
-    public function getProductDetailAttribute()
-    {
-        // Fetch the actual related data with related sub-data
-        return $this->productDetails()->with(['productDetailSizes', 'productImages'])->get();
-    }
+//    public function getProductDetailAttribute()
+//    {
+//        // Fetch the actual related data with related sub-data
+//        return $this->productDetails()->with(['productDetailSizes', 'productImages'])->get();
+//    }
+
 }

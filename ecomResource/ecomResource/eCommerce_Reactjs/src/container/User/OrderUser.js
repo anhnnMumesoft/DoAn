@@ -29,7 +29,7 @@ function OrderUser(props) {
                     let orderArray = []
                     for (let i = 0; i < order.data.length; i++) {
 
-                        orderArray = concat(orderArray, order.data[i].order)
+                        orderArray = concat(orderArray, order.data[i].orders)
                     }
 
                     setDataOrder(orderArray)
@@ -110,11 +110,11 @@ function OrderUser(props) {
                                                 </div>
                                             </div>
                                             <div className='content-right'>
-                                                {item.statusOrderData && item.statusOrderData.value} {item.isPaymentOnlien == 1 && ' | Đã thanh toán'}
+                                                {item.statusOrderData && item.statusOrderData.value} {item.is_payment_online == 1 && ' | Đã thanh toán'}
                                             </div>
                                         </div>
-                                        {item.orderDetail && item.orderDetail.length > 0 &&
-                                            item.orderDetail.map((item, index) => {
+                                        {item.orderDetails && item.orderDetails.length > 0 &&
+                                            item.orderDetails.map((item, index) => {
 
                                                 price += item.quantity * item.productDetail.discountPrice
                                                 return (

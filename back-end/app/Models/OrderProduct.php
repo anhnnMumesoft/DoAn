@@ -27,4 +27,5 @@ class OrderProduct extends Model
     {
         return $this->belongsTo(Allcode::class, 'status_id', 'code');
     }
+
 }

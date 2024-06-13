@@ -248,11 +248,11 @@ function OrderHomePage(props) {
                             {isChangeAdress === false ?
                                 <>
                                     <div className="content-left">
-                                        <span>{dataAddressUser && dataAddressUser.length > 0 && dataAddressUser[stt].shipName} ({dataAddressUser && dataAddressUser.length > 0 && dataAddressUser[0].shipPhonenumber})</span>
+                                        <span>{dataAddressUser && dataAddressUser.length > 0 && dataAddressUser[stt].shipName} ({dataAddressUser && dataAddressUser.length > 0 && dataAddressUser[stt].shipPhonenumber})</span>
                                     </div>
                                     <div className="content-center">
                                         <span>
-                                            {dataAddressUser && dataAddressUser.length > 0 && dataAddressUser[stt].shipAdress}
+                                            {dataAddressUser && dataAddressUser.length > 0 && dataAddressUser[stt].shipAddress}
                                         </span>
                                     </div>
                                 </>
@@ -271,7 +271,7 @@ function OrderHomePage(props) {
                                                         </div>
                                                         <div className="content-center">
                                                             <span>
-                                                                {item.shipAdress}
+                                                                {item.shipAddress}
                                                             </span>
                                                         </div>
                                                     </label>

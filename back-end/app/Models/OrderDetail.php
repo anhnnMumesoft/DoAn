@@ -12,7 +12,7 @@ class OrderDetail extends Model
     protected $table = 'orderdetails'; // Tên bảng trong database, chỉ cần nếu tên bảng không phải là số nhiều của tên model
 
     protected $fillable = [
-        'order_id', 'product_id', 'quantity', 'realPrice'
+        'order_id', 'product_id', 'quantity', 'real_price'
     ];
 
     // Định nghĩa các mối quan hệ ở đây nếu cần

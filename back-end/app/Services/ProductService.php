@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Comment;
 use App\Models\OrderDetail;
 use App\Models\Product;
 use App\Models\ProductDetail;
@@ -10,6 +11,7 @@ use App\Models\ProductImage;
 use App\Models\ReceiptDetail;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 class ProductService
@@ -127,14 +129,14 @@ class ProductService
 
         $products = $query->skip($offset)->take($limit)->get();
         // Additional data manipulation
-        foreach ($products as $product) {
-            $product->load(['productDetails.productDetailSizes', 'productDetails.productImages']);
-            foreach ($product->productDetails as $detail) {
-                foreach ($detail->productImages as $image) {
-                    $image->image = $image->image;
-                }
-            }
-        }
+//        foreach ($products as $product) {
+//            $product->load(['productDetail.productDetailSize', 'productDetail.productImages']);
+//            foreach ($product->productDetail as $detail) {
+//                foreach ($detail->productImage as $image) {
+//                    $image->image = $image->image;
+//                }
+//            }
+//        }
 
         // Optional: Sort by price if requested
         if (!empty($data['sortPrice']) && $data['sortPrice'] === "true") {
@@ -142,6 +144,45 @@ class ProductService
         }
          return ['errCode' => 0,'data' => $products,
              'count' => $queryProductCount->count()];
+    }
+    public function updateProduct($data)
+    {
+        if (empty($data['id']) || empty($data['categoryId']) || empty($data['brandId'])) {
+            return [
+                'errCode' => 1,
+                'errMessage' => 'Missing required parameter!'
+            ];
+        }
+
+        try {
+            $product = Product::find($data['id']);
+            if (!$product) {
+                return [
+                    'errCode' => 2,
+                    'errMessage' => 'Product not found!'
+                ];
+            }
+
+            $product->name = $data['name'];
+            $product->material = $data['material'];
+            $product->madeby = $data['madeby'];
+            $product->brandId = $data['brandId'];
+            $product->categoryId = $data['categoryId'];
+            $product->contentMarkdown = $data['contentMarkdown'];
+            $product->contentHTML = $data['contentHTML'];
+
+            $product->save();
+
+            return [
+                'errCode' => 0,
+                'errMessage' => 'Product updated successfully'
+            ];
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => 'Error from server: ' . $e->getMessage()
+            ];
+        }
     }
 
     public function unactiveProduct($data)
@@ -216,11 +257,11 @@ class ProductService
 
             foreach ($productDetails as $detail) {
                 $detail->productImages = ProductImage::where('product_detail_id', $detail->id)->get();
-                $detail->productDetailSizes = ProductDetailSize::with('sizeData')
+                $detail->productDetailSize = ProductDetailSize::with('sizeData')
                     ->where('productdetail_id', $detail->id)
                     ->get();
 
-                foreach ($detail->productDetailSizes as $size) {
+                foreach ($detail->productDetailSize as $size) {
                     $receiptDetails = ReceiptDetail::where('product_detail_size_id', $size->id)->get();
                     $orderDetails = OrderDetail::where('product_id', $size->id)->get();
 
@@ -230,8 +271,7 @@ class ProductService
                 }
             }
 
-            $product->productDetails = $productDetails;
-
+            $product->productDetail = $productDetails;
             return [
                 'errCode' => 0,
                 'data' => $product
@@ -259,7 +299,7 @@ class ProductService
         }
 
         $productDetails = ProductDetail::where('productId', $data['id'])
-            ->with(['productImages', 'productDetailSizes'])
+            ->with(['productImages'])
             ->paginate($data['limit'], ['*'], 'page', $data['offset'] / $data['limit'] + 1);
 
         // Convert images from base64 to binary
@@ -277,14 +317,6 @@ class ProductService
             'data' => $productDetails->items(),
             'count' => $productDetails->total()
         ];
-    }
-
-    public function getProductNew($limit)
-    {
-        return Product::with(['brandData', 'categoryData', 'statusData'])
-            ->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get();
     }
 
     public function getAllProductDetailImageById($data)
@@ -706,6 +738,239 @@ class ProductService
             DB::rollBack();
             return [
                 'errCode' => 2,
+                'errMessage' => 'Error from server: ' . $e->getMessage()
+            ];
+        }
+    }
+    public function getProductRecommend($data)
+    {
+        try {
+            if (empty($data['userId']) || empty($data['limit'])) {
+                return [
+                    'errCode' => 1,
+                    'errMessage' => 'Missing required parameter!'
+                ];
+            }
+
+            $ratings = Comment::whereNotNull('star')->get()->groupBy('product_id');
+            $recommendations = collect();
+
+            foreach ($ratings as $productId => $comments) {
+                $averageRating = $comments->avg('star');
+                if ($averageRating > 3) {
+                    $recommendations->push(Product::find($productId));
+                }
+            }
+
+            $recommendedProducts = $recommendations->slice(0, $data['limit']);
+
+            if ($recommendedProducts->isNotEmpty()) {
+                $recommendedProducts->load('productDetails.productDetailSizes', 'productDetails.productImages');
+                foreach ($recommendedProducts as $product) {
+                    foreach ($product->productDetails as $detail) {
+                        $detail->price = $detail->discountPrice;
+                        foreach ($detail->productImages as $image) {
+                            $image->image = base64_decode($image->image);
+                        }
+                    }
+                }
+            }
+
+            return [
+                'errCode' => 0,
+                'data' => $recommendedProducts
+            ];
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => 'Error from server: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    private function fetchRecommendedProducts($predictedTable, $userId, $limit)
+    {
+        $productArr = [];
+        foreach ($predictedTable->getRecommendationsForUser($userId) as $productId => $rating) {
+            if (count($productArr) >= $limit) break;
+            if ($rating > 3) {
+                $product = Product::with(['productDetails.productDetailSizes', 'productDetails.productImages'])
+                    ->find($productId);
+                if ($product) {
+                    $productArr[] = $product;
+                }
+            }
+        }
+        return $productArr;
+    }
+
+    public function getProductFeature($limit)
+    {
+        try {
+            $products = Product::with(['brandData', 'categoryData', 'statusData'])
+                ->orderBy('view', 'desc')
+                ->limit($limit)
+                ->get();
+
+            foreach ($products as $product) {
+                $productDetails = ProductDetail::where('productId', $product->id)->get();
+
+                foreach ($productDetails as $detail) {
+                    $detailSizes = ProductDetailSize::where('productdetail_id', $detail->id)->get();
+                    $detail->productDetailSizes = $detailSizes;
+
+                    $images = ProductImage::where('product_detail_id', $detail->id)->get();
+                    foreach ($images as $image) {
+                        $image->image = $image->image;
+                    }
+                    $detail->productImages = $images;
+                }
+
+                $product->productDetail = $productDetails;
+                $product->price = $productDetails->first()->discount_price ?? null;
+            }
+
+            return [
+                'errCode' => 0,
+                'data' => $products
+            ];
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => 'Error from server: ' . $e->getMessage()
+            ];
+        }
+    }
+    public function getProductNew($limit)
+    {
+        try {
+            $products = Product::with(['brandData', 'categoryData', 'statusData'])
+                ->orderBy('created_at', 'desc')
+                ->limit($limit)
+                ->get();
+
+            foreach ($products as $product) {
+                $productDetails = ProductDetail::where('productId', $product->id)->get();
+
+                foreach ($productDetails as $detail) {
+                    $detailSizes = ProductDetailSize::where('productdetail_id', $detail->id)->get();
+                    $detail->productDetailSizes = $detailSizes;
+
+                    $images = ProductImage::where('product_detail_id', $detail->id)->get();
+                    foreach ($images as $image) {
+                        $image->image = $image->image;
+                    }
+                    $detail->productImages = $images;
+                }
+
+                $product->productDetail = $productDetails;
+                $product->price = $productDetails->first()->discount_price ?? null;
+            }
+
+            return [
+                'errCode' => 0,
+                'data' => $products
+            ];
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => 'Error from server: ' . $e->getMessage()
+            ];
+        }
+    }
+//    public static function dynamicSortMultiple(Collection $collection, array $sortKeys): Collection
+//    {
+//        return $collection->sort(function ($a, $b) use ($sortKeys) {
+//            foreach ($sortKeys as $key => $order) {
+//                if ($a[$key] == $b[$key]) {
+//                    continue;
+//                }
+//
+//                if ($order === 'ASC') {
+//                    return $a[$key] < $b[$key] ? -1 : 1;
+//                } else {
+//                    return $a[$key] > $b[$key] ? -1 : 1;
+//                }
+//            }
+//
+//            return 0;
+//        });
+//    }
+
+    public function getAllProductUser($data)
+    {
+        try {
+            $query = Product::with(['brandData', 'categoryData', 'statusData'])
+                ->where('statusId', 'S1');
+            $queryCount = Product::with(['brandData', 'categoryData', 'statusData'])
+                ->where('statusId', 'S1');
+
+            if (!empty($data['limit'])) {
+                $query->limit($data['limit'])->offset($data['offset']);
+            }
+
+            if (!empty($data['categoryId']) && $data['categoryId'] !== 'ALL') {
+                $query->where('categoryId', $data['categoryId']);
+                $queryCount->where('categoryId', $data['categoryId']);
+            }
+
+            if (!empty($data['brandId']) && $data['brandId'] !== 'ALL') {
+                $query->where('brandId', $data['brandId']);
+                $queryCount->where('brandId', $data['brandId']);
+            }
+
+            if (!empty($data['sortName']) && $data['sortName'] === "true") {
+                $query->orderBy('name', 'ASC');
+                $queryCount->orderBy('name', 'ASC');
+            }
+
+            if (!empty($data['keyword'])) {
+                $query->where('name', 'like', '%' . $data['keyword'] . '%');
+                $queryCount->where('name', 'like', '%' . $data['keyword'] . '%');
+            }
+
+            $products = $query->get();
+
+            foreach ($products as $product) {
+                $productDetails = ProductDetail::where('productId', $product->id)->get();
+
+                foreach ($productDetails as $detail) {
+                    $detailSizes = ProductDetailSize::where('productdetail_id', $detail->id)->get();
+                    $detail->productDetailSizes = $detailSizes;
+
+                    $images = ProductImage::where('product_detail_id', $detail->id)->get();
+                    foreach ($images as $image) {
+                        $image->image = $image->image;
+                    }
+                    $detail->productImage = $images;
+                }
+
+                $product->productDetail = $productDetails;
+                $product->price = $productDetails->first()->discountPrice ?? null;
+            }
+//            $sortKeys = [
+//                'name' => 'ASC',
+//                'price' => 'DESC'
+//            ];
+//
+//            if (!empty($data['sortPrice']) && $data['sortPrice'] === "true") {
+//                $products =self::dynamicSortMultiple($products, $sortKeys)->toArray();
+//                $products= array_values($products);
+//            }
+
+            $productsArray = $products->toArray(); // Convert Collection to array
+            usort($productsArray, function($a, $b) {
+                return $b['price'] <=> $a['price']; // Sort in descending order by price
+            });
+
+            return [
+                'errCode' => 0,
+                'data' => $productsArray,
+                'count' => $queryCount->count()
+            ];
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
                 'errMessage' => 'Error from server: ' . $e->getMessage()
             ];
         }

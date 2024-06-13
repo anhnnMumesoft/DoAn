@@ -6,14 +6,41 @@ use App\Models\OrderDetail;
 use App\Models\OrderProduct;
 use App\Models\AddressUser;
 use App\Models\Product;
+use App\Models\ProductDetail;
 use App\Models\ProductDetailSize;
 use App\Models\ProductImage;
+use App\Models\ShopCart;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Models\VoucherUsed;
 use Exception;
+use PayPal\Api\Amount;
+use PayPal\Api\Item;
+use PayPal\Api\ItemList;
+use PayPal\Api\Payer;
+use PayPal\Api\Payment;
+use PayPal\Api\PaymentExecution;
+use PayPal\Api\RedirectUrls;
+use PayPal\Api\Transaction;
+use PayPal\Auth\OAuthTokenCredential;
+use PayPal\Rest\ApiContext;
 
 class OrderService
+{   public function __construct()
 {
+    $this->apiContext = new ApiContext(
+        new OAuthTokenCredential(
+            'AXE5kGLGPq2EHy44gxuxDvf5GLMBPJoF_IUxszooHH4z2iOYmmVNIfqSyFjK3f7O8ikzAQy_LC-9amrd',     // ClientID
+            'ELkqvm4YMV9k32-U6I_doNHgynKC9o3lnRl_YTTd7T8qFWbJm-esEvEfGZAAnMgj92za41vM259N7w3y'  // ClientSecret
+        )
+    );
+
+    // Configure the ApiContext as needed
+    $this->apiContext->setConfig([
+        'mode' => 'sandbox', // Or 'live'
+        // Other configuration settings
+    ]);
+}
     public function getAllOrders($data)
     {
         try {
@@ -130,5 +157,227 @@ class OrderService
                 'errMessage' => 'Error from server: ' . $e->getMessage()
             ];
         }
+    }
+    public function paymentOrder($data)
+    {
+//        try {
+            $listItem = new ItemList();
+            $totalPriceProduct = 0;
+
+            foreach ($data['result'] as $result) {
+
+                $productDetailSize = ProductDetailSize::with('sizeData')->find($result['productId']);
+                $productDetail = ProductDetail::find($productDetailSize->productdetail_id);
+                $product = Product::find($productDetail->productId);
+                define("App\Services\EXCHANGE_RATES", [
+                    'USD' => 1.0,
+                    'EUR' => 0.85,
+                    // Add other currencies as needed
+                ]);
+                $realPrice = round($result['realPrice'] / EXCHANGE_RATES['USD'], 2);
+
+                $item = new Item();
+                $item->setName($product->name . " | " . $productDetail->nameDetail . " | " . $productDetailSize->sizeData['value'])
+                    ->setCurrency('USD')
+                    ->setQuantity($result['quantity'])
+                    ->setSku($result['productId']) // Similar to `item_id` in your JS code
+                    ->setPrice($realPrice);
+                $listItem->addItem($item);
+
+                $totalPriceProduct += $realPrice * $result['quantity'];
+
+            }
+
+            $item = new Item();
+            $item->setName("Phi ship + Voucher")
+                ->setCurrency('USD')
+                ->setQuantity(1)
+                ->setPrice(round($data['total'] - $totalPriceProduct, 2));
+            $listItem->addItem($item);
+
+            $amount = new Amount();
+            $amount->setCurrency("USD")
+                ->setTotal($data['total']);
+
+            $transaction = new Transaction();
+            $transaction->setAmount($amount)
+                ->setItemList($listItem)
+                ->setDescription("This is the payment description.");
+
+            $redirectUrls = new RedirectUrls();
+            $redirectUrls->setReturnUrl(url('http://localhost:5001/payment/success'))
+                ->setCancelUrl(url('http://localhost:5001/payment/cancel'));
+
+            $payer = new Payer();
+            $payer->setPaymentMethod("paypal");
+
+            $payment = new Payment();
+            $payment->setIntent("sale")
+                ->setPayer($payer)
+                ->setRedirectUrls($redirectUrls)
+                ->setTransactions(array($transaction));
+
+        try {
+            $payment->create($this->apiContext);
+        } catch (\PayPal\Exception\PayPalConnectionException $ex) {
+            // PayPalConnectionException là một ví dụ, sử dụng ngoại lệ phù hợp
+            error_log($ex->getData()); // Ghi lại phản hồi từ PayPal
+            return [
+                'errCode' => -1,
+                'errMessage' => $ex->getMessage(),
+            ];
+        } catch (\Exception $ex) {
+            error_log($ex->getMessage());
+            return [
+                'errCode' => -1,
+                'errMessage' => 'An error occurred',
+            ];
+        }
+            return [
+                'errCode' => 0,
+                'errMessage' => 'ok',
+                'link' => $payment->getApprovalLink()
+            ];
+//        } catch (Exception $e) {
+//            return [
+//                'errCode' => -1,
+//                'errMessage' => $e->getMessage(),
+//            ];
+//        }
+    }
+    public function executePayment($data)
+    {
+//        return $data;
+        if (empty($data['PayerID']) || empty($data['paymentId']) || empty($data['token'])) {
+            return [
+                'errCode' => 1,
+                'errMessage' => 'Missing required parameter!'
+            ];
+        }
+
+        try {
+
+            $paymentId = $data['paymentId'];
+            $payment = Payment::get($paymentId, $this->apiContext);
+
+            $execution = new PaymentExecution();
+            $execution->setPayerId($data['PayerID']);
+
+            $amount = new Amount();
+            $amount->setCurrency("USD")
+            ->setTotal($data['total']);
+
+            $transaction = new Transaction();
+            $transaction->setAmount($amount);
+
+            $execution->addTransaction($transaction);
+
+            $result = $payment->execute($execution, $this->apiContext);
+
+            if ($result) {
+                $orderProduct = OrderProduct::create([
+                    'address_user_id' => $data['addressUserId'],
+                    'is_payment_online' => $data['isPaymentOnlien'],
+                    'status_id' => 'S3',
+                    'type_ship_id' => $data['typeShipId'],
+                    'voucher_id' => $data['voucherId']??NULL,
+                    'note' => $data['note']
+                ]);
+
+
+                foreach ($data['arrDataShopCart'] as $item) {
+
+                    $item['order_id'] = $orderProduct->id;
+                    $item['real_price'] = $item['realPrice']; // Thêm dòng này để sử dụng 'real_price' thay vì 'realPrice'
+                    unset($item['realPrice']); // Xóa 'realPrice' khỏi $item
+                    $item['product_id'] = $item['productId']; // Thêm dòng này để sử dụng 'real_price' thay vì 'realPrice'
+                    unset($item['productId']); // Xóa 'realPrice' khỏi $item
+                    OrderDetail::create($item);
+
+//                    $productDetailSize = ProductDetailSize::find($item['product_id']);
+//                    $productDetailSize->decrement('stock', $item['quantity']);
+                }
+
+                ShopCart::where('userId', $data['userId'])->where('statusId', 0)->delete();
+
+                if (!empty($data['voucherId'])) {
+                    VoucherUsed::where('voucherId', $data['voucherId'])
+                        ->where('userId', $data['userId'])
+                        ->update(['status' => 1]);
+                }
+
+                return [
+                    'errCode' => 0,
+                    'errMessage' => 'ok'
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => $e->getMessage(),
+            ];
+        }
+    }
+    public function getAllOrdersByUser($userId)
+    {
+        if (empty($userId)) {
+            return [
+                'errCode' => 1,
+                'errMessage' => 'Missing required parameter!'
+            ];
+        }
+
+//        try {
+            $addressUsers = AddressUser::with(['orders.typeShipData', 'orders.voucherData', 'orders.statusOrderData'])
+                ->where('user_id', $userId)
+                ->get();
+
+            foreach ($addressUsers as $addressUser) {
+                foreach ($addressUser->orders as $order) {
+                    if ($order->voucherData) {
+                        $order->voucherData = $order->voucherData->typeVoucher;
+                    } else {
+                        // Handle the case where voucher is null
+                        $order->voucherData = null;
+                    }
+
+                    $orderDetails = OrderDetail::where('order_id', $order->id)
+                        ->get();
+                    foreach ($orderDetails as $orderDetail) {
+                        $orderDetail->productDetailSize = ProductDetailSize::find($orderDetail->product_id);
+                        $orderDetail->productDetail = ProductDetail::find($orderDetail->productDetailSize->productdetail_id);
+                        $orderDetail->product = Product::find($orderDetail->productDetail->productId);
+
+                        $productImages = ProductImage::where('product_detail_id', $orderDetail->productDetail->id)->get();
+                        foreach ($productImages as $image) {
+                            $image->image = $image->image;
+                        }
+                        $orderDetail->productImage = $productImages;
+                    }
+                    $order->statusOrderData=$order->statusOrderData;
+                    $order->typeShipData=$order->typeShipData;
+
+
+//                    foreach ($orderDetails as $detail) {
+//                        $detail->productImages->transform(function ($image) {
+//                            $image->image = $image->image;
+//                            return $image;
+//                        });
+//                    }
+
+                    $order->orderDetails = $orderDetails;
+                }
+            }
+
+            return [
+                'errCode' => 0,
+                'data' => $addressUsers
+            ];
+//        } catch (Exception $e) {
+//            return [
+//                'errCode' => -1,
+//                'errMessage' => $e->getMessage()
+//            ];
+//        }
     }
 }

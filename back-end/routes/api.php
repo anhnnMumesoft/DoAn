@@ -1,12 +1,15 @@
 <?php
 
 
+use App\Http\Controllers\AddressUserController;
 use App\Http\Controllers\AllcodeController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ShopCartController;
 use App\Http\Controllers\StatisticController;
 use App\Http\Controllers\SupplierController;
@@ -204,4 +207,35 @@ Route::middleware(['verify.user'])->group(function () {
     Route::post('/add-shopcart', [ShopCartController::class, 'addShopCart']);
     Route::get('/get-all-shopcart-by-userId', [ShopCartController::class, 'getAllShopCartByUserId']);
     Route::delete('/delete-item-shopcart', [ShopCartController::class, 'deleteItemShopCart']);
+});
+
+// Create a new comment
+Route::post('/create-new-comment', [CommentController::class, 'createNewComment'])->middleware('verify.user');
+// Reply to a comment
+Route::post('/reply-comment', [CommentController::class, 'replyComment'])->middleware('verify.admin');
+// Get all comments by blog ID
+Route::get('/get-all-comment-by-blogId', [CommentController::class, 'getAllCommentByBlogId']);
+// Delete a comment
+Route::delete('/delete-comment/{commentId}', [CommentController::class, 'deleteComment'])->middleware('verify.user');
+
+
+// Create a new review
+Route::post('/create-new-review', [CommentController::class, 'createNewReview'])->middleware('verify.user');
+
+// Reply to a review
+Route::post('/reply-review', [CommentController::class, 'replyReview'])->middleware('verify.admin');
+
+// Get all reviews by product ID
+Route::get('/get-all-review-by-productId', [CommentController::class, 'getAllReviewByProductId']);
+
+// Delete a review
+Route::delete('/delete-review/{reviewId}', [CommentController::class, 'deleteReview'])->middleware('verify.user');
+
+//Address
+Route::middleware(['verify.user'])->group(function () {
+    Route::post('create-new-address-user', [AddressUserController::class, 'createNewAddressUser']);
+    Route::get('get-all-address-user', [AddressUserController::class, 'getAllAddressUserByUserId']);
+    Route::delete('delete-address-user', [AddressUserController::class, 'deleteAddressUser']);
+    Route::put('edit-address-user', [AddressUserController::class, 'editAddressUser']);
+    Route::get('get-detail-address-user-by-id', [AddressUserController::class, 'getDetailAddressUserById']);
 });
