@@ -14,6 +14,9 @@ use App\Models\User;
 use App\Models\Voucher;
 use App\Models\VoucherUsed;
 use Exception;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use PayPal\Api\Amount;
 use PayPal\Api\Item;
 use PayPal\Api\ItemList;
@@ -70,6 +73,8 @@ class OrderService
                 if (!$order->voucherData) {
                     // No Voucher found, handle accordingly
                     $order->voucherData = new Voucher(array_fill_keys(array_keys((new Voucher)->getAttributes()), null));
+                }else{
+                    $order->voucherData=$order->voucherData;
                 }
             }
 
@@ -101,15 +106,18 @@ class OrderService
             $order->addressUser = AddressUser::find($order->address_user_id);
             $order->userData = User::find($order->addressUser->user_id);
 
-            $orderDetails = OrderDetail::with(['productDetailSize.sizeData', 'productDetail.product'])
+            $orderDetails = OrderDetail::with(['productDetailSize.sizeData'])
                 ->where('order_id', $id)
                 ->get();
 
             foreach ($orderDetails as $detail) {
-                $detail->productImage = ProductImage::where('product_detail_id', $detail->product_id)
+                $detail->productDetailSize = ProductDetailSize::find($detail->product_id);
+                $detail->productDetail = ProductDetail::find($detail->productDetailSize->productdetail_id);
+                $detail->product = Product::find($detail->productDetail->productId);
+                $detail->productImage = ProductImage::where('product_detail_id', $detail->productDetail->id)
                     ->get();
-                $detail->product = Product::where('id', $detail->productDetail->productId)
-                    ->first();
+//                $detail->product = Product::where('id', $detail->productDetail->productId)
+//                    ->first();
             }
 
             $order->orderDetail = $orderDetails;
@@ -379,5 +387,277 @@ class OrderService
 //                'errMessage' => $e->getMessage()
 //            ];
 //        }
+    }
+    public function getAllOrdersByShipper($data)
+    {
+        try {
+            $query = OrderProduct::orderBy('created_at', 'desc')
+                ->where('shipper_id', $data['shipperId']);
+
+            if (!empty($data['status'])) {
+                if ($data['status'] == 'working') {
+                    $query->where('status_id', 'S5');
+                } elseif ($data['status'] == 'done') {
+                    $query->where('status_id', 'S6');
+                }
+            }
+
+            $orders = $query->get();
+
+            foreach ($orders as $order) {
+                $addressUser = AddressUser::where('id', $order->address_user_id)->first();
+                if ($addressUser) {
+                    $user = User::where('id', $addressUser->user_id)->first();
+                    $order->userData = $user;
+                    $order->addressUser = $addressUser;
+                }
+            }
+
+            return [
+                'errCode' => 0,
+                'data' => $orders
+            ];
+        } catch (\Exception $e) {
+            return [
+                'errCode' => -1,
+                'errorMessage' => $e->getMessage()
+            ];
+        }
+    }
+    public function paymentOrderVnpay($req)
+    {
+        try {
+            $vnp_IpAddr = $req->ip();
+            $vnp_TmnCode = env('VNP_TMNCODE');
+            $vnp_HashSecret = env('VNP_HASHSECRET');
+            $vnp_Url = env('VNP_URL');
+            $vnp_Returnurl = env('VNP_RETURNURL');
+            $createDate = now()->format('YmdHis');
+            $vnp_TxnRef = Str::uuid()->toString();
+
+            $vnp_Amount = $req->input('amount');
+            $vnp_BankCode = $req->input('bankCode');
+            $vnp_OrderInfo = $req->input('orderDescription');
+            $vnp_OrderType = $req->input('orderType');
+            $vnp_Locale  = $req->input('language', 'vn');
+            $currCode = 'VND';
+
+            $inputData = array(
+                "vnp_Version" => "2.1.0",
+                "vnp_TmnCode" => $vnp_TmnCode,
+                "vnp_Amount" => $vnp_Amount*100,
+                "vnp_Command" => "pay",
+                "vnp_CreateDate" => date('YmdHis'),
+                "vnp_CurrCode" => $currCode,
+                "vnp_IpAddr" => $vnp_IpAddr,
+                "vnp_Locale" => $vnp_Locale,
+                "vnp_OrderInfo" => $vnp_OrderInfo,
+                "vnp_OrderType" => $vnp_OrderType,
+                "vnp_ReturnUrl" => $vnp_Returnurl,
+                "vnp_TxnRef" => $vnp_TxnRef,
+
+            );
+
+            if (isset($vnp_BankCode) && $vnp_BankCode != "") {
+                $inputData['vnp_BankCode'] = $vnp_BankCode;
+            }
+
+            ksort($inputData);
+            $query = "";
+            $i = 0;
+            $hashdata = "";
+            foreach ($inputData as $key => $value) {
+                if ($i == 1) {
+                    $hashdata .= '&' . urlencode($key) . "=" . urlencode($value);
+                } else {
+                    $hashdata .= urlencode($key) . "=" . urlencode($value);
+                    $i = 1;
+                }
+                $query .= urlencode($key) . "=" . urlencode($value) . '&';
+            }
+
+            $vnp_Url = $vnp_Url . "?" . $query;
+            if (isset($vnp_HashSecret)) {
+                $vnpSecureHash =   hash_hmac('sha512', $hashdata, $vnp_HashSecret);//
+                $vnp_Url .= 'vnp_SecureHash=' . $vnpSecureHash;
+            }
+            return [
+                'errCode' => 200,
+                'link' => $vnp_Url
+            ];
+        } catch (\Exception $e) {
+            return [
+                'errCode' => -1,
+                'errorMessage' => $e->getMessage()
+            ];
+        }
+    }
+    public function confirmOrderVnpay($data)
+    {
+        try {
+            $vnp_Params = $data;
+            $secureHash = Arr::pull($vnp_Params, 'vnp_SecureHash');
+            Arr::forget($vnp_Params, 'vnp_SecureHashType');
+
+            ksort($vnp_Params);
+            $queryData = urldecode(http_build_query($vnp_Params));
+
+            $secretKey =  env('VNP_HASHSECRET');
+            $hmac = hash_hmac('sha512', $queryData, $secretKey);
+
+            if ($secureHash === $hmac) {
+                return [
+                    'errCode' => 0,
+                    'errMessage' => 'Success'
+                ];
+            } else {
+                return [
+                    'errCode' => 1,
+                    'errMessage' => 'Failed'
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'errCode' => -1,
+                'errorMessage' => $e->getMessage()
+            ];
+        }
+    }
+    public function paymentOrderVnpaySuccess($data)
+    {
+        DB::beginTransaction();
+        try {
+            if (empty($data['addressUserId']) || empty($data['typeShipId'])) {
+                return [
+                    'errCode' => 1,
+                    'errMessage' => 'Missing required parameter!'
+                ];
+            }
+
+            $product = OrderProduct::create([
+                'address_user_id' => $data['addressUserId'],
+                'is_payment_online' => $data['isPaymentOnlien'],
+                'status_id' => 'S3',
+                'type_ship_id' => $data['typeShipId'],
+                'voucher_id' => $data['voucherId'] ?? null,
+                'note' => $data['note']
+            ]);
+
+            foreach ($data['arrDataShopCart'] as $item) {
+                $item['order_id'] = $product->id;
+            }
+
+            $orderDetails = array_map(function ($item) use ($product) {
+                return [
+                    'order_id' => $product->id,  // Assuming $product->id is the ID of the newly created order
+                    'product_id' => $item['productId'],
+                    'quantity' => $item['quantity'],
+                    'real_price' => $item['realPrice']  // Ensure this field exists in $item
+                ];
+            }, $data['arrDataShopCart']);
+            // Insert data into OrderDetail
+            OrderDetail::insert($orderDetails);
+
+            $res = ShopCart::where('userId', $data['userId'])->where('statusId', 0)->first();
+            if ($res) {
+                ShopCart::where('userId', $data['userId'])->delete();
+
+                foreach ($data['arrDataShopCart'] as $item) {
+                    $productDetailSize = ProductDetailSize::find($item['productId']);
+//                    $productDetailSize->decrement('stock', $item['quantity']);
+                }
+            }
+
+            if (isset($data['voucherId']) && isset($data['userId'])) {
+                if (!empty($data['voucherId']) && !empty($data['userId'])) {
+                    $voucherUses = VoucherUsed::where('voucherId', $data['voucherId'])
+                        ->where('userId', $data['userId'])
+                        ->first();
+                    $voucherUses->status = 1;
+                    $voucherUses->save();
+                }
+            }
+
+            DB::commit();
+            return [
+                'errCode' => 0,
+                'errMessage' => 'ok'
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'errCode' => -1,
+                'errMessage' => $e->getMessage()
+            ];
+        }
+    }
+    public function createNewOrder($data)
+    {
+        DB::beginTransaction();
+        try {
+            if (empty($data['addressUserId']) || empty($data['typeShipId'])) {
+                return [
+                    'errCode' => 1,
+                    'errMessage' => 'Missing required parameter!'
+                ];
+            }
+
+            $product = OrderProduct::create([
+                'address_user_id' => $data['addressUserId'],
+                'is_payment_online' => $data['isPaymentOnlien'],
+                'status_id' => 'S3',
+                'type_ship_id' => $data['typeShipId'],
+                'voucher_id' => $data['voucherId'] ?? null,
+                'note' => $data['note']
+            ]);
+
+            foreach ($data['arrDataShopCart'] as &$item) {
+                $item['order_id'] = $product->id;
+            }
+
+            $orderDetails = array_map(function ($item) use ($product) {
+                return [
+                    'order_id' => $product->id,  // Assuming $product->id is the ID of the newly created order
+                    'product_id' => $item['productId'],
+                    'quantity' => $item['quantity'],
+                    'real_price' => $item['realPrice']  // Ensure this field exists in $item
+                ];
+            }, $data['arrDataShopCart']);
+            foreach ($orderDetails as $detail) {
+                OrderDetail::create($detail);
+            }
+
+            $res = ShopCart::where('userId', $data['userId'])->where('statusId', 0)->first();
+            if ($res) {
+                ShopCart::where('userId', $data['userId'])->delete();
+
+                foreach ($data['arrDataShopCart'] as $item) {
+                    $productDetailSize = ProductDetailSize::find($item['productId']);
+//                    $productDetailSize->decrement('stock', $item['quantity']);
+                }
+            }
+
+            if (!empty($data['voucherId']) && !empty($data['userId'])) {
+                $voucherUses = VoucherUsed::where('voucherId', $data['voucherId'])
+                    ->where('userId', $data['userId'])
+                    ->first();
+                if ($voucherUses) {
+                    $voucherUses->status = 1;
+                    $voucherUses->save();
+                }
+            }
+
+            DB::commit();
+            return [
+                'errCode' => 0,
+                'errMessage' => 'ok'
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return [
+                'errCode' => -1,
+                'errMessage' => $e->getMessage()
+            ];
+        }
     }
 }

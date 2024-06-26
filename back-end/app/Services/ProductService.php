@@ -129,14 +129,23 @@ class ProductService
 
         $products = $query->skip($offset)->take($limit)->get();
         // Additional data manipulation
-//        foreach ($products as $product) {
-//            $product->load(['productDetail.productDetailSize', 'productDetail.productImages']);
-//            foreach ($product->productDetail as $detail) {
-//                foreach ($detail->productImage as $image) {
-//                    $image->image = $image->image;
-//                }
-//            }
-//        }
+        foreach ($products as $product) {
+            $productDetails = ProductDetail::where('productId', $product->id)->get();
+
+            foreach ($productDetails as $detail) {
+                $detailSizes = ProductDetailSize::where('productdetail_id', $detail->id)->get();
+                $detail->productDetailSize = $detailSizes;
+
+                $images = ProductImage::where('product_detail_id', $detail->id)->get();
+                foreach ($images as $image) {
+                    $image->image = $image->image;
+                }
+                $detail->productImage = $images;
+            }
+
+            $product->productDetail = $productDetails;
+            $product->price = $productDetails->first()->discountPrice ?? null;
+        }
 
         // Optional: Sort by price if requested
         if (!empty($data['sortPrice']) && $data['sortPrice'] === "true") {

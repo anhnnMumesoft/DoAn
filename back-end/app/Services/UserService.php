@@ -253,13 +253,14 @@ class UserService
         $phoneExists = User::where('phonenumber', $data['phonenumber'])->exists();
         $emailExists = User::where('email', $data['email'])->exists();
 
+        if ($emailExists) {
+            return ['isCheck' => true, 'errMessage' => "Email đã tồn tại"];
+        }
         if ($phoneExists) {
             return ['isCheck' => true, 'errMessage' => "Số điện thoại đã tồn tại"];
         }
 
-        if ($emailExists) {
-            return ['isCheck' => true, 'errMessage' => "Email đã tồn tại"];
-        }
+
 
         return ['isCheck' => false, 'errMessage' => "Hợp lệ"];
     }

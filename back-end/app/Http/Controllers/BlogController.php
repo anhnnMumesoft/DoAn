@@ -49,4 +49,10 @@ class BlogController extends Controller
         $result = $this->blogService->getNewBlog($data);
         return response()->json($result);
     }
+    public function getFeatureBlog (Request $request)
+    {
+        $limit = $request->input('limit', 5); // Default to 5 if no limit is provided
+        $result = $this->blogService->getFeaturedBlogs($limit);
+        return response()->json($result);
+    }
 }

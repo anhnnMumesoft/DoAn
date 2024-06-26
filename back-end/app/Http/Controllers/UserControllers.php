@@ -41,7 +41,11 @@ class UserControllers extends Controller
 
     public function changePassword(Request $request)
     {
-        $data = $this->userService->handleChangePassword($request->all());
+        $id=$request->id;
+        $oldpassword=$request->oldpassword;
+        $password=$request->password;
+
+        $data = $this->userService->handleChangePassword($id,$password,$oldpassword);
         return response()->json($data);
     }
 

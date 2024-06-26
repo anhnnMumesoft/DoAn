@@ -71,4 +71,74 @@ class AddressUserService
             ];
         }
     }
+    public function getDetailById($id)
+    {
+        if (empty($id)) {
+            return [
+                'errCode' => 1,
+                'errMessage' => 'Missing required parameter!'
+            ];
+        }
+
+        try {
+            $addressUser = AddressUser::find($id);
+
+            if ($addressUser) {
+                return [
+                    'errCode' => 0,
+                    'data' => [
+                        'id' => $addressUser->id,
+                        'userId' => $addressUser->user_id,
+                        'shipName' => $addressUser->ship_name,
+                        'shipAddress' => $addressUser->ship_address,
+                        'shipEmail' => $addressUser->ship_email,
+                        'shipPhonenumber' => $addressUser->ship_phonenumber,
+                        'createdAt' => $addressUser->created_at ? $addressUser->created_at->toDateTimeString() : null,
+                        'updatedAt' => $addressUser->updated_at ? $addressUser->updated_at->toDateTimeString() : null
+                    ],
+                ];
+            } else {
+                return [
+                    'errCode' => 2,
+                    'errMessage' => 'Address user not found'
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => $e->getMessage()
+            ];
+        }
+    }
+    public function deleteAddressUser($data)
+    {
+        try {
+            if (empty($data['id'])) {
+                return [
+                    'errCode' => 1,
+                    'errMessage' => 'Missing required parameter!'
+                ];
+            }
+
+            $addressUser = AddressUser::find($data['id']);
+
+            if ($addressUser) {
+                $addressUser->delete();
+                return [
+                    'errCode' => 0,
+                    'errMessage' => 'ok'
+                ];
+            } else {
+                return [
+                    'errCode' => -1,
+                    'errMessage' => 'Địa chỉ user không tìm thấy'
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => $e->getMessage()
+            ];
+        }
+    }
 }

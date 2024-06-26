@@ -227,4 +227,32 @@ class BlogService
             ];
         }
     }
+    public function getFeaturedBlogs($limit)
+    {
+        try {
+            $blogs = Blog::with(['subjectData' => function ($query) {
+                $query->select('value', 'code');
+            }])
+                ->where('statusId', 'S1')
+                ->orderBy('view', 'desc')
+                ->limit($limit)
+                ->get();
+
+            foreach ($blogs as $blog) {
+                $blog->image =$blog->image;
+                $blog->userData = User::find($blog->user_id);
+                $blog->commentData = Comment::where('blogId', $blog->id)->get();
+            }
+
+            return [
+                'errCode' => 0,
+                'data' => $blogs
+            ];
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => $e->getMessage()
+            ];
+        }
+    }
 }

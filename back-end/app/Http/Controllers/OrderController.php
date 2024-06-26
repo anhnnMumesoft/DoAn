@@ -50,4 +50,34 @@ class OrderController extends Controller
         $result = $this->orderService->getAllOrdersByUser($userId);
         return response()->json($result);
     }
+    public function getAllOrdersByShipper(Request $request)
+    {
+        $data = $request->all();
+        $response = $this->orderService->getAllOrdersByShipper($data);
+        return response()->json($response);
+    }
+    public function paymentOrderVnpay(Request $request)
+    {
+        $response = $this->orderService->paymentOrderVnpay($request);
+        return response()->json($response);
+    }
+    public function confirmOrderVnpay(Request $request)
+    {
+        $data = $request->all();
+        $response = $this->orderService->confirmOrderVnpay($data);
+        return response()->json($response);
+    }
+    public function paymentOrderVnpaySuccess(Request $request)
+    {
+        $data = $request->all();
+        $response = $this->orderService->paymentOrderVnpaySuccess($data);
+        return response()->json($response);
+    }
+    public function createNewOrder(Request $request)
+    {
+        $data = $request->all();
+        $response = $this->orderService->createNewOrder($data);
+        return response()->json($response);
+    }
+
 }

@@ -54,14 +54,16 @@ Route::middleware('verify.admin')->group(function () {
     Route::post('/create-new-all-code', [AllcodeController::class, 'handleCreateNewAllCode'])->name('allcode.create');
     Route::put('/update-all-code', [AllcodeController::class, 'handleUpdateAllCode'])->name('allcode.update');
     Route::delete('/delete-all-code', [AllcodeController::class, 'handleDeleteAllCode'])->name('allcode.delete');
-    Route::get('/get-all-code', [AllcodeController::class, 'getAllCodeService'])->name('allcode.getAll');
+
     Route::get('/get-list-allcode', [AllcodeController::class, 'getListAllCodeService'])->name('allcode.getList');
     Route::get('/get-detail-all-code-by-id', [AllcodeController::class, 'getDetailAllCodeById'])->name('allcode.getDetail');
-    Route::get('/get-all-category-blog', [AllcodeController::class, 'getAllCategoryBlog'])->name('allcode.getAllCategoryBlog');
+
     Route::post('/create-new-all-code', [AllcodeController::class, 'handleCreateNewAllCode']);
     Route::put('/update-all-code', [AllcodeController::class, 'handleUpdateAllCode']);
     Route::delete('/delete-all-code', [AllcodeController::class, 'handleDeleteAllCode']);
 });
+Route::get('/get-all-code', [AllcodeController::class, 'getAllCodeService'])->name('allcode.getAll');
+Route::get('/get-all-category-blog', [AllcodeController::class, 'getAllCategoryBlog'])->name('allcode.getAllCategoryBlog');
 // Product
 
 // Group routes with admin middleware
@@ -87,7 +89,7 @@ Route::get('/get-all-product-user', [ProductController::class, 'getAllProductUse
 Route::get('/get-detail-product-by-id', [ProductController::class, 'getDetailProductById']);
 Route::get('/get-all-product-detail-by-id', [ProductController::class, 'getAllProductDetailById']);
 Route::get('/get-all-product-detail-image-by-id', [ProductController::class, 'getAllProductDetailImageById']);
-Route::get('/get-product-detail-by-id', [ProductController::class, 'getDetailProductById']);
+Route::get('/get-product-detail-by-id', [ProductController::class, 'getDetailProductDetailById']);
 Route::get('/get-product-detail-image-by-id', [ProductController::class, 'getDetailProductImageById']);
 Route::get('/get-all-product-detail-size-by-id', [ProductController::class, 'getAllProductDetailSizeById']);
 Route::get('/get-detail-product-detail-size-by-id', [ProductController::class, 'getDetailProductDetailSizeById']);
@@ -102,8 +104,9 @@ Route::middleware('verify.admin')->group(function () {
         Route::put('/update-banner', [ BannerController::class, 'updateBanner']);
         Route::delete('/delete-banner', [ BannerController::class, 'deleteBanner']);
     Route::get('/get-detail-banner', [ BannerController::class, 'getDetailBanner']);
-    Route::get('/get-all-banner', [ BannerController::class, 'getAllBanner']);
+
 });
+Route::get('/get-all-banner', [ BannerController::class, 'getAllBanner']);
 //=================API BLOG===============================//
 Route::middleware('verify.admin')->group(function () {
     Route::post('/create-new-blog', [BlogController::class, 'createNewBlog']);
@@ -229,7 +232,7 @@ Route::post('/reply-review', [CommentController::class, 'replyReview'])->middlew
 Route::get('/get-all-review-by-productId', [CommentController::class, 'getAllReviewByProductId']);
 
 // Delete a review
-Route::delete('/delete-review/{reviewId}', [CommentController::class, 'deleteReview'])->middleware('verify.user');
+Route::delete('/delete-review', [CommentController::class, 'deleteReview'])->middleware('verify.user');
 
 //Address
 Route::middleware(['verify.user'])->group(function () {

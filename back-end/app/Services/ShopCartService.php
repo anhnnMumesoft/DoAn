@@ -66,7 +66,7 @@ class ShopCartService
             ];
         }
 
-//        try {
+        try {
             $cart = ShopCart::where('userId', $data['userId'])
                 ->where('productdetailsizeId', $data['productdetailsizeId'])
                 ->where('statusId', 0)
@@ -124,12 +124,12 @@ class ShopCartService
                 'errCode' => 0,
                 'errMessage' => 'ok'
             ];
-//        } catch (Exception $e) {
-//            return [
-//                'errCode' => -1,
-//                'errMessage' => 'Error from server: ' . $e->getMessage()
-//            ];
-//        }
+        } catch (Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => 'Error from server: ' . $e->getMessage()
+            ];
+        }
     }
 
     private function calculateStock($productDetailSizeId)
