@@ -141,4 +141,38 @@ class AddressUserService
             ];
         }
     }
+    public function editAddressUser($data) {
+        try {
+            if (!isset($data['id']) || !isset($data['shipName']) || !isset($data['shipAdress']) || !isset($data['shipEmail']) || !isset($data['shipPhonenumber'])) {
+                return [
+                    'errCode' => 1,
+                    'errMessage' => 'Missing required parameter !'
+                ];
+            } else {
+                $addressUser = AddressUser::find($data['id']);
+                if ($addressUser) {
+                    $addressUser->ship_name = $data['shipName'];
+                    $addressUser->ship_phonenumber = $data['shipPhonenumber'];
+                    $addressUser->ship_address = $data['shipAdress'];
+                    $addressUser->ship_email = $data['shipEmail'];
+
+                    $addressUser->save();
+                    return [
+                        'errCode' => 0,
+                        'errMessage' => 'ok'
+                    ];
+                } else {
+                    return [
+                        'errCode' => 0,
+                        'errMessage' => 'Địa chỉ người dùng không tồn tại'
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => $e->getMessage()
+            ];
+        }
+    }
 }

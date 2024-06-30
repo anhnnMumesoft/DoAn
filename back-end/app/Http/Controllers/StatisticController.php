@@ -44,4 +44,19 @@ class StatisticController extends Controller
         $response = $this->statisticService->getStatisticByDay($data);
         return response()->json($response);
     }
+    public function getStatisticOverturn(Request $request)
+    {
+        $data = $request->all();
+        $result = $this->statisticService->getStatisticOverturn($data);
+
+        return response()->json($result);
+    }
+
+    public function getStatisticProfit(Request $request)
+    {
+        $data = $request->all();
+        $result = $this->statisticService->getStatisticProfit($data);
+
+        return response()->json($result);
+    }
 }

@@ -761,33 +761,50 @@ class ProductService
                 ];
             }
 
-            $ratings = Comment::whereNotNull('star')->get()->groupBy('product_id');
+            $ratings = Comment::whereNotNull('star')->get()->groupBy('productId');
             $recommendations = collect();
-
             foreach ($ratings as $productId => $comments) {
                 $averageRating = $comments->avg('star');
+
                 if ($averageRating > 3) {
-                    $recommendations->push(Product::find($productId));
+
+                    $product = Product::find($productId);
+                    if ($product) {
+                        $recommendations->push($product);
+                    }
                 }
             }
 
-            $recommendedProducts = $recommendations->slice(0, $data['limit']);
 
+            $recommendedProducts = $recommendations->slice(0, $data['limit']);
+            $processedProducts = [];
             if ($recommendedProducts->isNotEmpty()) {
-                $recommendedProducts->load('productDetails.productDetailSizes', 'productDetails.productImages');
-                foreach ($recommendedProducts as $product) {
-                    foreach ($product->productDetails as $detail) {
-                        $detail->price = $detail->discountPrice;
-                        foreach ($detail->productImages as $image) {
-                            $image->image = base64_decode($image->image);
+                foreach ($recommendedProducts as $product1) {
+                    $product = Product::with(['brandData', 'categoryData', 'statusData'])
+                                        ->where('id',$product1->id)->first();
+
+                    $productDetails = ProductDetail::where('productId', $product->id)->get();
+
+                    foreach ($productDetails as $detail) {
+                        $detailSizes = ProductDetailSize::where('productdetail_id', $detail->id)->get();
+                        $detail->productDetailSizes = $detailSizes;
+
+                        $images = ProductImage::where('product_detail_id', $detail->id)->get();
+                        foreach ($images as $image) {
+                            $image->image = $image->image;
                         }
+                        $detail->productImages = $images;
                     }
+
+                    $product->productDetail = $productDetails;
+                    $product->price = $productDetails->first()->discountPrice ?? null;
+                    $processedProducts[] = $product;
                 }
             }
 
             return [
                 'errCode' => 0,
-                'data' => $recommendedProducts
+                'data' => $processedProducts
             ];
         } catch (Exception $e) {
             return [
@@ -795,22 +812,6 @@ class ProductService
                 'errMessage' => 'Error from server: ' . $e->getMessage()
             ];
         }
-    }
-
-    private function fetchRecommendedProducts($predictedTable, $userId, $limit)
-    {
-        $productArr = [];
-        foreach ($predictedTable->getRecommendationsForUser($userId) as $productId => $rating) {
-            if (count($productArr) >= $limit) break;
-            if ($rating > 3) {
-                $product = Product::with(['productDetails.productDetailSizes', 'productDetails.productImages'])
-                    ->find($productId);
-                if ($product) {
-                    $productArr[] = $product;
-                }
-            }
-        }
-        return $productArr;
     }
 
     public function getProductFeature($limit)
@@ -836,7 +837,7 @@ class ProductService
                 }
 
                 $product->productDetail = $productDetails;
-                $product->price = $productDetails->first()->discount_price ?? null;
+                $product->price = $productDetails->first()->discountPrice ?? null;
             }
 
             return [
@@ -873,7 +874,7 @@ class ProductService
                 }
 
                 $product->productDetail = $productDetails;
-                $product->price = $productDetails->first()->discount_price ?? null;
+                $product->price = $productDetails->first()->discountPrice ?? null;
             }
 
             return [

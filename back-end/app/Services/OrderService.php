@@ -343,7 +343,7 @@ class OrderService
             foreach ($addressUsers as $addressUser) {
                 foreach ($addressUser->orders as $order) {
                     if ($order->voucherData) {
-                        $order->voucherData = $order->voucherData->typeVoucher;
+                        $order->discount = $order->voucherData->typeVoucher;
                     } else {
                         // Handle the case where voucher is null
                         $order->voucherData = null;

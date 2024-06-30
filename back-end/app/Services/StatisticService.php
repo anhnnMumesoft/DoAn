@@ -11,6 +11,7 @@ use App\Models\OrderDetail;
 use App\Models\OrderProduct;
 use App\Models\TypeVoucher;
 use App\Models\User;
+use App\Models\Voucher;
 use Exception;
 use Illuminate\Support\Carbon;
 
@@ -108,14 +109,34 @@ class StatisticService
                     if ($data['type'] === "month") {
                         // Adjust the date format to match the input string
                         try {
-                            $monthYear = Carbon::createFromFormat('D M d Y H:i:s e+', $data['oneDate']);
+                            $date = Carbon::createFromFormat('D M d Y H:i:s e+', $data['oneDate']);
                         } catch (\Exception $e) {
                             return false; // If parsing fails, exclude this item
                         }
-                        return $updatedAt->month === $monthYear->month && $updatedAt->year === $monthYear->year;
-                    } else {
-                        return false; // Handle other types if necessary
+                        return $updatedAt->month === $date->month && $updatedAt->year === $date->year;
                     }
+                    if ($data['type'] === "year") {
+                        // Adjust the date format to match the input string
+                        try {
+                            $date = Carbon::createFromFormat('D M d Y H:i:s e+', $data['oneDate']);
+                        } catch (\Exception $e) {
+                            return false; // If parsing fails, exclude this item
+                        }
+                        return $updatedAt->year === $date->year;
+                    }
+                    if ($data['type'] === "day") {
+                        $oneDate = Carbon::createFromFormat('D M d Y H:i:s e+', $data['oneDate']);
+
+
+                        if ($oneDate && $data['twoDate'] !='null' && $data['oneDate']!=$data['twoDate']) {
+                            $twoDate = Carbon::createFromFormat('D M d Y H:i:s e+', $data['twoDate']);
+                            return $updatedAt->between($oneDate, $twoDate);
+                        } else {
+                            return $updatedAt->day === $oneDate->day && $updatedAt->month === $oneDate->month && $updatedAt->year === $oneDate->year;
+                        }
+
+                    }
+
                 });
 
 
@@ -273,5 +294,189 @@ class StatisticService
             return $totalPrice - $discount->typeVoucherOfVoucherData->maxValue;
         }
     }
+
+    public function getStatisticOverturn($data)
+    {
+        try {
+            if (!isset($data['oneDate']) || !isset($data['twoDate'])) {
+                return [
+                    'errCode' => 1,
+                    'data' => 'Missing required parameter !'
+                ];
+            }
+
+            $orderProducts = OrderProduct::where('status_id', 'S6')
+                ->with(['typeShipData', 'voucherData', 'statusOrderData'])
+                ->get();
+
+            foreach ($orderProducts as $orderProduct) {
+                $orderProduct->orderDetail = OrderDetail::where('order_id', $orderProduct->id)->get();
+                if ($orderProduct->voucherData) {
+                    $orderProduct->voucherData->typeVoucherOfVoucherData = TypeVoucher::find($orderProduct->voucherData->typeVoucherId);
+                }else{
+                    $orderProduct->voucherData = new Voucher(array_fill_keys(array_keys((new Voucher)->getAttributes()), null));
+                }
+
+                $totalPrice = 0;
+                foreach ($orderProduct->orderDetail as $orderDetail) {
+                    $totalPrice += $orderDetail->real_price * $orderDetail->quantity;
+                }
+
+                if ($orderProduct->voucherId) {
+                    $orderProduct->totalpriceProduct = $this->totalPriceDiscount($totalPrice, $orderProduct) + $orderProduct->typeShipData->price;
+                } else {
+                    $orderProduct->totalpriceProduct = $totalPrice + $orderProduct->typeShipData->price;
+                }
+                $orderProduct->typeShipData=$orderProduct->typeShipData;
+                $orderProduct->statusOrderData=$orderProduct->statusOrderData;
+            }
+
+
+            $filteredOrderProducts = $orderProducts->filter(function ($item) use ($data) {
+                $updatedAt = Carbon::parse($item->updated_at);
+
+                if ($data['type'] === "month") {
+                    // Adjust the date format to match the input string
+                    try {
+                        $date = Carbon::createFromFormat('D M d Y H:i:s e+', $data['oneDate']);
+                    } catch (\Exception $e) {
+                        return false; // If parsing fails, exclude this item
+                    }
+                    return $updatedAt->month === $date->month && $updatedAt->year === $date->year;
+                }
+                if ($data['type'] === "year") {
+                    // Adjust the date format to match the input string
+                    try {
+                        $date = Carbon::createFromFormat('D M d Y H:i:s e+', $data['oneDate']);
+                    } catch (\Exception $e) {
+                        return false; // If parsing fails, exclude this item
+                    }
+                    return $updatedAt->year === $date->year;
+                }
+                if ($data['type'] === "day") {
+                        $oneDate = Carbon::createFromFormat('D M d Y H:i:s e+', $data['oneDate']);
+
+
+                    if ($oneDate && $data['twoDate'] !='null' && $data['oneDate']!=$data['twoDate']) {
+                        $twoDate = Carbon::createFromFormat('D M d Y H:i:s e+', $data['twoDate']);
+                        return $updatedAt->between($oneDate, $twoDate);
+                    } else {
+                        return $updatedAt->day === $oneDate->day && $updatedAt->month === $oneDate->month && $updatedAt->year === $oneDate->year;
+                    }
+
+                }
+
+            });
+            $filteredOrderProductsArray = $filteredOrderProducts->values()->toArray();
+            return [
+                'errCode' => 0,
+                'data' => $filteredOrderProductsArray
+            ];
+        } catch (\Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function getStatisticProfit($data)
+    {
+        try {
+            if (!isset($data['oneDate']) || !isset($data['twoDate'])) {
+                return [
+                    'errCode' => 1,
+                    'data' => 'Missing required parameter !'
+                ];
+            }
+
+            $orderProducts = OrderProduct::where('status_id', 'S6')
+                ->with(['typeShipData', 'voucherData', 'statusOrderData'])
+                ->get();
+
+            foreach ($orderProducts as $orderProduct) {
+                $orderProduct->orderDetail = OrderDetail::where('order_id', $orderProduct->id)->get();
+                if ($orderProduct->voucherData) {
+                    $orderProduct->voucherData->typeVoucherOfVoucherData = TypeVoucher::find($orderProduct->voucherData->typeVoucherId);
+                }else{
+                    $orderProduct->voucherData = new Voucher(array_fill_keys(array_keys((new Voucher)->getAttributes()), null));
+                }
+
+                $totalPrice = 0;
+                $importPrice = 0;
+                foreach ($orderProduct->orderDetail as $orderDetail) {
+                    $receiptDetails = ReceiptDetail::where('product_detail_size_id', $orderDetail->product_id)->get();
+
+                    $avgPrice = 0;
+                    $avgQuantity = 0;
+                    foreach ($receiptDetails as $receiptDetail) {
+                        $avgPrice += $receiptDetail->quantity * $receiptDetail->price;
+                        $avgQuantity += $receiptDetail->quantity;
+                    }
+                    $orderDetail->importPrice = round($avgPrice / $avgQuantity);
+                    $importPrice += round($avgPrice / $avgQuantity) * $orderDetail->quantity;
+                    $totalPrice += $orderDetail->real_price * $orderDetail->quantity;
+                }
+                $orderProduct->importPrice = $importPrice;
+                if ($orderProduct->voucherId) {
+                    $orderProduct->totalpriceProduct = $this->totalPriceDiscount($totalPrice, $orderProduct) + $orderProduct->typeShipData->price;
+                    $orderProduct->profitPrice = $this->totalPriceDiscount($totalPrice, $orderProduct) + $orderProduct->typeShipData->price - $importPrice;
+                } else {
+                    $orderProduct->totalpriceProduct = $totalPrice + $orderProduct->typeShipData->price;
+                    $orderProduct->profitPrice = ($totalPrice + $orderProduct->typeShipData->price) - $importPrice;
+                }
+                $orderProduct->typeShipData=$orderProduct->typeShipData;
+                $orderProduct->statusOrderData=$orderProduct->statusOrderData;
+            }
+
+            $filteredOrderProducts = $orderProducts->filter(function ($item) use ($data) {
+                $updatedAt = Carbon::parse($item->updated_at);
+
+                if ($data['type'] === "month") {
+                    // Adjust the date format to match the input string
+                    try {
+                        $date = Carbon::createFromFormat('D M d Y H:i:s e+', $data['oneDate']);
+                    } catch (\Exception $e) {
+                        return false; // If parsing fails, exclude this item
+                    }
+                    return $updatedAt->month === $date->month && $updatedAt->year === $date->year;
+                }
+                if ($data['type'] === "year") {
+                    // Adjust the date format to match the input string
+                    try {
+                        $date = Carbon::createFromFormat('D M d Y H:i:s e+', $data['oneDate']);
+                    } catch (\Exception $e) {
+                        return false; // If parsing fails, exclude this item
+                    }
+                    return $updatedAt->year === $date->year;
+                }
+                if ($data['type'] === "day") {
+                    $oneDate = Carbon::createFromFormat('D M d Y H:i:s e+', $data['oneDate']);
+
+
+                    if ($oneDate && $data['twoDate'] !='null'&&$data['oneDate']!=$data['twoDate']) {
+                        $twoDate = Carbon::createFromFormat('D M d Y H:i:s e+', $data['twoDate']);
+                        return $updatedAt->between($oneDate, $twoDate);
+                    } else {
+                        return $updatedAt->day === $oneDate->day && $updatedAt->month === $oneDate->month && $updatedAt->year === $oneDate->year;
+                    }
+
+                }
+
+            });
+
+            $filteredOrderProductsArray = $filteredOrderProducts->values()->toArray();
+            return [
+                'errCode' => 0,
+                'data' => $filteredOrderProductsArray
+            ];
+        } catch (\Exception $e) {
+            return [
+                'errCode' => -1,
+                'errMessage' => $e->getMessage()
+            ];
+        }
+    }
+
 
 }

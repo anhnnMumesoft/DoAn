@@ -39,4 +39,11 @@ class AddressUserController extends Controller
         $response = $this->addressUserService->deleteAddressUser($data);
         return response()->json($response);
     }
+    public function editAddressUser(Request $request)
+    {
+        $data = $request->all();
+        $result = $this->addressUserService->editAddressUser($data);
+
+        return response()->json($result);
+    }
 }
