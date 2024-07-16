@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('material')->nullable();
             $table->string('brandId')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

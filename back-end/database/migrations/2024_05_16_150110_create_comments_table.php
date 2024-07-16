@@ -23,6 +23,7 @@ return new class extends Migration
             $table->unsignedBigInteger('blogId')->nullable();
             $table->integer('star');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

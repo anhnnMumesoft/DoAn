@@ -1,39 +1,48 @@
 import React from 'react';
 
 function Footer(props) {
+
+  
+
+  const rowStyle = {
+    display: 'flex',
+    justifyContent: 'center', // Căn giữa theo chiều ngang
+  }
+
   return (
-    <div>
+    <div >
       <footer className="footer-area section_gap">
         <div className="container">
-          <div className="row">
-            <div className="col-lg-2 col-md-6 single-footer-widget">
-              <h4>Top Products</h4>
+        <div className="row" style={rowStyle}>
+            <div className="col-lg-3 col-md-6 single-footer-widget">
+              <h4>Giới thiệu </h4>
               <ul>
-                <li><a href="#">Managed Website</a></li>
-                <li><a href="#">Manage Reputation</a></li>
-                <li><a href="#">Power Tools</a></li>
-                <li><a href="#">Marketing Service</a></li>
+                <li><a href="#">Về NNA Shop </a></li>
+                <li><a href="#">Tuyển dụng </a></li>
+                <li><a href="#">Hệ thống cửa hàng </a></li>
               </ul>
             </div>
             <div className="col-lg-2 col-md-6 single-footer-widget">
-              <h4>Quick Links</h4>
+              <h4>Dịch vụ chăm sóc khách hàng </h4>
               <ul>
-                <li><a href="#">Jobs</a></li>
-                <li><a href="#">Brand Assets</a></li>
-                <li><a href="#">Investor Relations</a></li>
-                <li><a href="#">Terms of Service</a></li>
+                <li><a href="#">Chính sách điều khoản </a></li>
+                <li><a href="#">Hướng dẫn mua hàng</a></li>
+                <li><a href="#">Chính sách thanh toán </a></li>
+                <li><a href="#">Chính sách đổi trả </a></li>
+                <li><a href="#">Chính sách bảo hành </a></li>
+                <li><a href="#">Chính sách vận chuyển </a></li>
               </ul>
             </div>
-            <div className="col-lg-2 col-md-6 single-footer-widget">
-              <h4>Features</h4>
+            <div className="col-lg-3 col-md-6 single-footer-widget">
+              <h4>Liên hệ </h4>
               <ul>
-                <li><a href="#">Jobs</a></li>
-                <li><a href="#">Brand Assets</a></li>
-                <li><a href="#">Investor Relations</a></li>
-                <li><a href="#">Terms of Service</a></li>
+                <li><a href="#">Hotline: 0923960640</a></li>
+                <li><a href="#">Email: anh.nn205228@sis.hust.edu.vn</a></li>
+                {/* <li><a href="#"></a></li> */}
+                {/* <li><a href="#">Terms of Service</a></li> */}
               </ul>
             </div>
-            <div className="col-lg-2 col-md-6 single-footer-widget">
+            {/* <div className="col-lg-2 col-md-6 single-footer-widget">
               <h4>Resources</h4>
               <ul>
                 <li><a href="#">Guides</a></li>
@@ -41,7 +50,7 @@ function Footer(props) {
                 <li><a href="#">Experts</a></li>
                 <li><a href="#">Agencies</a></li>
               </ul>
-            </div>
+            </div> */}
 
           </div>
           <div className="footer-bottom row align-items-center">

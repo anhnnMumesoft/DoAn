@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->bigInteger('price');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('user_id')->nullable();
             $table->integer('supplier_id')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

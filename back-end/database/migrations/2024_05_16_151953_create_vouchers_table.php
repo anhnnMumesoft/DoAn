@@ -21,6 +21,7 @@ return new class extends Migration
             $table->integer('amount')->nullable();
             $table->string('codeVoucher')->nullable();
             $table->timestamps(); // Tự động tạo createdAt và updatedAt
+            $table->softDeletes();
         });
     }
 

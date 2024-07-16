@@ -24,6 +24,7 @@ return new class extends Migration
             $table->integer('is_payment_online')->default(0);
             $table->binary('image')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

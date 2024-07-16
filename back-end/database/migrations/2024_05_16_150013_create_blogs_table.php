@@ -25,6 +25,7 @@ return new class extends Migration
             $table->unsignedBigInteger('userId');
             $table->integer('view')->default(0);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

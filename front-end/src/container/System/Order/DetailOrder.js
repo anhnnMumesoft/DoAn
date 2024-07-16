@@ -238,7 +238,7 @@ function DetailOrder(props) {
                       sản phẩm:{" "}
                     </span>
                     <span className="text-price">
-                      {DataOrder && DataOrder.voucherData && DataOrder.voucherId
+                      {DataOrder && DataOrder.voucherData && DataOrder.voucher_id
                         ? CommonUtils.formatter.format(
                             totalPriceDiscount(price, DataOrder.voucherData) +
                               priceShip
@@ -305,7 +305,7 @@ function DetailOrder(props) {
               <div className="box-flex">
                 <div className="head">Tổng giảm giá</div>
                 <div>
-                  {DataOrder && DataOrder.voucherData && DataOrder.voucherId
+                  {DataOrder && DataOrder.voucherData && DataOrder.voucher_id
                     ? CommonUtils.formatter.format(
                         price - totalPriceDiscount(price, DataOrder.voucherData)
                       )
@@ -320,7 +320,7 @@ function DetailOrder(props) {
               <div className="box-flex">
                 <div className="head">Tổng thanh toán:</div>
                 <div className="money">
-                  {DataOrder && DataOrder.voucherData && DataOrder.voucherId
+                  {DataOrder && DataOrder.voucherData && DataOrder.voucher_id
                     ? CommonUtils.formatter.format(
                         totalPriceDiscount(price, DataOrder.voucherData) +
                           priceShip

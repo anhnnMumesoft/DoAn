@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AddressUser;
 use Exception;
+use App\Helpers\ValidationHelper;
 
 class AddressUserService
 {
@@ -12,7 +13,7 @@ class AddressUserService
         if (empty($userId)) {
             return [
                 'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
+                'errMessage' => 'Lỗi thiếu id người dùng!'
             ];
         }
 
@@ -44,11 +45,18 @@ class AddressUserService
     }
     public function createNewAddressUser($data)
     {
-        if (empty($data['userId'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'userId' => 'id người dùng',
+            'shipName' => 'tên',
+            'shipAdress' => 'địa chỉ giao hàng',
+            'shipEmail' => 'email',
+            'shipPhonenumber' => 'số điện thoại'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         try {
@@ -76,7 +84,7 @@ class AddressUserService
         if (empty($id)) {
             return [
                 'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
+                'errMessage' => 'Lỗi thiếu id người dùng!'
             ];
         }
 
@@ -100,7 +108,7 @@ class AddressUserService
             } else {
                 return [
                     'errCode' => 2,
-                    'errMessage' => 'Address user not found'
+                    'errMessage' => 'Không tìm thấy địa chỉ người dùng'
                 ];
             }
         } catch (Exception $e) {
@@ -116,14 +124,14 @@ class AddressUserService
             if (empty($data['id'])) {
                 return [
                     'errCode' => 1,
-                    'errMessage' => 'Missing required parameter!'
+                    'errMessage' => 'Lỗi thiếu id người dùng!'
                 ];
             }
 
             $addressUser = AddressUser::find($data['id']);
 
             if ($addressUser) {
-                $addressUser->delete();
+                $addressUser->delete(); // Soft delete
                 return [
                     'errCode' => 0,
                     'errMessage' => 'ok'
@@ -143,30 +151,37 @@ class AddressUserService
     }
     public function editAddressUser($data) {
         try {
-            if (!isset($data['id']) || !isset($data['shipName']) || !isset($data['shipAdress']) || !isset($data['shipEmail']) || !isset($data['shipPhonenumber'])) {
+            $requiredFields = [
+                'id' => 'id',
+                'shipName' => 'tên',
+                'shipAdress' => 'địa chỉ giao hàng',
+                'shipEmail' => 'email',
+                'shipPhonenumber' => 'số điện thoại'
+            ];
+        
+            $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+        
+            if ($validationResult) {
+                return $validationResult;
+            }
+             
+            $addressUser = AddressUser::find($data['id']);
+            if ($addressUser) {
+                $addressUser->ship_name = $data['shipName'];
+                $addressUser->ship_phonenumber = $data['shipPhonenumber'];
+                $addressUser->ship_address = $data['shipAdress'];
+                $addressUser->ship_email = $data['shipEmail'];
+
+                $addressUser->save();
                 return [
-                    'errCode' => 1,
-                    'errMessage' => 'Missing required parameter !'
+                    'errCode' => 0,
+                    'errMessage' => 'ok'
                 ];
             } else {
-                $addressUser = AddressUser::find($data['id']);
-                if ($addressUser) {
-                    $addressUser->ship_name = $data['shipName'];
-                    $addressUser->ship_phonenumber = $data['shipPhonenumber'];
-                    $addressUser->ship_address = $data['shipAdress'];
-                    $addressUser->ship_email = $data['shipEmail'];
-
-                    $addressUser->save();
-                    return [
-                        'errCode' => 0,
-                        'errMessage' => 'ok'
-                    ];
-                } else {
-                    return [
-                        'errCode' => 0,
-                        'errMessage' => 'Địa chỉ người dùng không tồn tại'
-                    ];
-                }
+                return [
+                    'errCode' => 0,
+                    'errMessage' => 'Địa chỉ người dng không tồn tại'
+                ];
             }
         } catch (\Exception $e) {
             return [
@@ -175,4 +190,5 @@ class AddressUserService
             ];
         }
     }
+
 }

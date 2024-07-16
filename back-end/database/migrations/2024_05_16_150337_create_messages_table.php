@@ -20,6 +20,7 @@ return new class extends Migration
             $table->unsignedBigInteger('room_id');
             $table->boolean('un_read')->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

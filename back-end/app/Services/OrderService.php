@@ -61,7 +61,7 @@ class OrderService
             $orders = $query->get();
 
             foreach ($orders as $order) {
-                $addressUser = AddressUser::find($order->address_user_id);
+                $addressUser = AddressUser::withTrashed()->find($order->address_user_id);
                 $shipper = User::find($order->shipper_id);
 
                 if ($addressUser) {
@@ -103,9 +103,10 @@ class OrderService
             $order = OrderProduct::with(['typeShipData', 'voucherData.typeVoucher', 'statusOrderData'])
                 ->findOrFail($id);
 
-            $order->addressUser = AddressUser::find($order->address_user_id);
+            $order->addressUser = AddressUser::withTrashed()->find($order->address_user_id);
             $order->userData = User::find($order->addressUser->user_id);
-
+            $order->typeShipData=$order->typeShipData;
+            $order->voucherData=$order->voucherData;
             $orderDetails = OrderDetail::with(['productDetailSize.sizeData'])
                 ->where('order_id', $id)
                 ->get();
@@ -335,21 +336,27 @@ class OrderService
             ];
         }
 
-//        try {
-            $addressUsers = AddressUser::with(['orders.typeShipData', 'orders.voucherData', 'orders.statusOrderData'])
-                ->where('user_id', $userId)
-                ->get();
+       try {
+           $addressUsers = AddressUser::withTrashed()->with(['orders' => function ($query) {
+               $query->with(['typeShipData' => function ($query) {
+                   $query->withTrashed();
+               }, 'voucherData', 'statusOrderData'])
+                   ->orderBy('created_at', 'desc');
+           }])
+               ->where('user_id', $userId)
+               ->get();
 
             foreach ($addressUsers as $addressUser) {
                 foreach ($addressUser->orders as $order) {
                     if ($order->voucherData) {
-                        $order->discount = $order->voucherData->typeVoucher;
+                        $order->voucherData = $order->voucherData;
                     } else {
                         // Handle the case where voucher is null
                         $order->voucherData = null;
                     }
 
                     $orderDetails = OrderDetail::where('order_id', $order->id)
+
                         ->get();
                     foreach ($orderDetails as $orderDetail) {
                         $orderDetail->productDetailSize = ProductDetailSize::find($orderDetail->product_id);
@@ -381,12 +388,12 @@ class OrderService
                 'errCode' => 0,
                 'data' => $addressUsers
             ];
-//        } catch (Exception $e) {
-//            return [
-//                'errCode' => -1,
-//                'errMessage' => $e->getMessage()
-//            ];
-//        }
+       } catch (Exception $e) {
+           return [
+               'errCode' => -1,
+               'errMessage' => $e->getMessage()
+           ];
+       }
     }
     public function getAllOrdersByShipper($data)
     {

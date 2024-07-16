@@ -21,29 +21,11 @@ const Header = props => {
 
 
     useEffect(() => {
-        socketRef.current = socketIOClient.connect(host)
+
         const userData = JSON.parse(localStorage.getItem('userData'));
         setUser(userData)
         if (userData) {
             dispatch(getItemCartStart(userData.id))
-            socketRef.current.on('getId', data => {
-                setId(data)
-              }) // phần này đơn giản để gán id cho mỗi phiên kết nối vào page. Mục đích chính là để phân biệt đoạn nào là của mình đang chat.
-            fetchListRoom(userData.id)
-    
-            socketRef.current.on('sendDataServer', dataGot => {
-               
-                fetchListRoom(userData.id)
-    
-                })  
-             socketRef.current.on('loadRoomServer', dataGot => {
-                    
-                    fetchListRoom(userData.id)
-        
-                    })  
-              return () => {
-                socketRef.current.disconnect();
-              };
         }
        
     }, [])
@@ -55,21 +37,7 @@ const Header = props => {
             }
         })
     }
-    let fetchListRoom = async(userId) =>{
-        let res = await listRoomOfUser(userId)
-        if(res && res.errCode ==0 ){
-          
-            let count = 0;
-            if(res.data && res.data.length> 0 && res.data[0].messageData && res.data[0].messageData.length > 0){
-                res.data[0].messageData.forEach((item) =>{
-                    if(item.unRead === 1 && item.userId !== userId) count = count +1;
-                  })
-            }
-           
-            setquantityMessage(count)
-        }
-       
-      }
+
     scrollHeader()
 
     return (

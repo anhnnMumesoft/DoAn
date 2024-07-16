@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('ship_email')->nullable();
             $table->string('ship_phonenumber')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

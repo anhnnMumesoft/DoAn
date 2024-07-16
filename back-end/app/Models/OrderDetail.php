@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class OrderDetail extends Model
-{
+{    use SoftDeletes;
     use HasFactory;
 
     protected $table = 'orderdetails'; // Tên bảng trong database, chỉ cần nếu tên bảng không phải là số nhiều của tên model

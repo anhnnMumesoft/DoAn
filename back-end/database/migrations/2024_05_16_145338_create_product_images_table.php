@@ -19,6 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('product_detail_id');
             $table->mediumBlob('image');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

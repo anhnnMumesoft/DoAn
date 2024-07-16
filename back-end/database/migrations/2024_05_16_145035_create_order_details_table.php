@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->bigInteger('real_price');
             $table->timestamps(); // Tự động tạo createdAt và updatedAt
+            $table->softDeletes();
         });
     }
 

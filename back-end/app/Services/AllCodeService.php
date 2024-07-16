@@ -5,13 +5,14 @@ namespace App\Services;
 use App\Models\Allcode;
 use App\Models\Blog;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Helpers\ValidationHelper;
 
 class AllCodeService
 {
     public function handleCreateNewAllCode($data)
     {
         if (empty($data['type']) || empty($data['value']) || empty($data['code'])) {
-            return ['errCode' => 1, 'errMessage' => 'Missing required parameters!'];
+            return ['errCode' => 1, 'errMessage' => 'Thiếu thông số bắt buộc!'];
         }
 
         $existingCode = Allcode::where('code', $data['code'])->first();
@@ -31,7 +32,7 @@ class AllCodeService
     public function getAllCodeService($typeInput)
     {
         if (empty($typeInput)) {
-            return ['errCode' => 1, 'errMessage' => 'Missing required parameters!'];
+            return ['errCode' => 1, 'errMessage' => 'Thiếu thông số bắt buộc!'];
         }
 
         $allcode = Allcode::where('type', $typeInput)->get();
@@ -41,7 +42,7 @@ class AllCodeService
     public function handleUpdateAllCode($data)
     {
         if (empty($data['value']) || empty($data['code']) || empty($data['id'])) {
-            return ['errCode' => 1, 'errMessage' => 'Missing required parameters!'];
+            return ['errCode' => 1, 'errMessage' => 'Thiếu thông số bắt buộc!'];
         }
 
         $allcode = Allcode::find($data['id']);
@@ -60,7 +61,7 @@ class AllCodeService
     public function getDetailAllCodeById($id)
     {
         if (empty($id)) {
-            return ['errCode' => 1, 'errMessage' => 'Missing required parameters!'];
+            return ['errCode' => 1, 'errMessage' => 'Thiếu thông số bắt buộc!'];
         }
 
         $allcode = Allcode::find($id);
@@ -74,16 +75,16 @@ class AllCodeService
     public function handleDeleteAllCode($allcodeId)
     {
         if (empty($allcodeId)) {
-            return ['errCode' => 1, 'errMessage' => 'Missing required parameters!'];
+            return ['errCode' => 1, 'errMessage' => 'Thiếu thông số bắt buộc!'];
         }
 
         $allcode = Allcode::find($allcodeId);
         if (!$allcode) {
-            return ['errCode' => 2, 'errMessage' => 'The allCode isn\'t exist'];
+            return ['errCode' => 2, 'errMessage' => 'allCode không tồn tại'];
         }
 
         $allcode->delete();
-        return ['errCode' => 0, 'message' => 'The allCode is deleted'];
+        return ['errCode' => 0, 'message' => 'AllCode đã bị xóa'];
     }
 
     public function getListAllCodeService($data)
@@ -112,7 +113,7 @@ class AllCodeService
     public function getAllCategoryBlog($typeInput)
     {
         if (empty($typeInput)) {
-            return ['errCode' => 1, 'errMessage' => 'Missing required parameters!'];
+            return ['errCode' => 1, 'errMessage' => 'Thiếu thông số bắt buộc!'];
         }
 
         $allcodes = Allcode::where('type', $typeInput)->get();

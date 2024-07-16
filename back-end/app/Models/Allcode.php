@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class Allcode extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     protected $table = 'allcodes'; // Tên bảng trong database, chỉnh sửa nếu tên khác
     protected $fillable = ['type', 'value', 'code']; // Các trường có thể được mass assigned
 

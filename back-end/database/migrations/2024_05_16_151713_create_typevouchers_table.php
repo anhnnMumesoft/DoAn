@@ -20,6 +20,7 @@ return new class extends Migration
             $table->bigInteger('maxValue');
             $table->bigInteger('minValue');
             $table->timestamps(); // Tự động thêm createdAt và updatedAt
+            $table->softDeletes();
         });
     }
 

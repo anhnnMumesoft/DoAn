@@ -15,12 +15,13 @@ return new class extends Migration
     {
         Schema::create('ProductDetailSizes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('productdetail_id')->constrained('productdetails');
+            $table->foreignId('productdetail_id')->nullable();
             $table->string('width');
             $table->string('height');
             $table->string('weight');
             $table->string('size_id');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

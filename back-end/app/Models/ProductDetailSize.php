@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class ProductDetailSize extends Model
-{
+{    use SoftDeletes;
     use HasFactory;
     protected $table = 'productdetailsizes';
     protected $fillable = ['productdetail_id', 'width', 'height', 'weight', 'size_id'];

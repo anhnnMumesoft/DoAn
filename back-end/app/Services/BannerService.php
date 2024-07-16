@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Banner;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
-
+use App\Helpers\ValidationHelper;
 class BannerService
 {
     public function getAllBanner($data)
@@ -39,7 +39,7 @@ class BannerService
         if (empty($id)) {
             return [
                 'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
+                'errMessage' => 'Thiếu thông số bắt buộc!'
             ];
         }
 
@@ -71,13 +71,18 @@ class BannerService
     }
     public function updateBanner($data)
     {
-        if (empty($data['id']) || empty($data['image']) || empty($data['description']) || empty($data['name'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'id' => 'ID',
+            'image' => 'hình ảnh',
+            'description' => 'mô tả',
+            'name' => 'tên'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
-
         try {
             $banner = Banner::find($data['id']);
 
@@ -106,11 +111,16 @@ class BannerService
     }
     public function createNewBanner($data)
     {
-        if (empty($data['image']) || empty($data['description']) || empty($data['name'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'image' => 'hình ảnh',
+            'description' => 'mô tả',
+            'name' => 'tên'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         try {

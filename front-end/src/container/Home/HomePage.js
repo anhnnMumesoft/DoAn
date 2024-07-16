@@ -32,9 +32,9 @@ function HomePage(props) {
         setIsLoading(true); // Start loading
     
         const fetchAllData = async () => {
-            if (userData) {
-                await fetchProductRecommend(userData.id);
-            }
+            // if (userData) {
+            //     await fetchProductRecommend(userData.id);
+            // }
             await Promise.all([
                 fetchBlogFeature(),
                 fetchDataBrand(),
@@ -59,15 +59,15 @@ function HomePage(props) {
             setDataProductFeature(res.data)
         }
     }
-    let fetchProductRecommend = async (userId) => {
-        let res = await getProductRecommendService({
-            limit: 20,
-            userId: userId
-        })
-        if (res && res.errCode === 0) {
-            setdataProductRecommend(res.data)
-        }
-    }
+    // let fetchProductRecommend = async (userId) => {
+    //     let res = await getProductRecommendService({
+    //         limit: 20,
+    //         userId: userId
+    //     })
+    //     if (res && res.errCode === 0) {
+    //         setdataProductRecommend(res.data)
+    //     }
+    // }
     let fetchDataBrand = async () => {
         let res = await getAllBanner({
             limit: 6,
@@ -100,7 +100,7 @@ function HomePage(props) {
 
 
             <MainFeature></MainFeature>
-            <ProductFeature title={"Gợi ý sản phẩm"} data={dataProductRecommend}></ProductFeature>
+            {/* <ProductFeature title={"Gợi ý sản phẩm"} data={dataProductRecommend}></ProductFeature> */}
             <ProductFeature title={"Sản phẩm đặc trưng"} data={dataProductFeature}></ProductFeature>
             <NewProductFeature title="Sản phẩm mới" description="Những sản phẩm vừa ra mắt mới lạ cuốn hút người xem" data={dataNewProductFeature}></NewProductFeature>
             <HomeBlog data={dataNewBlog} />

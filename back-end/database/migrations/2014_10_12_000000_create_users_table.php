@@ -31,6 +31,7 @@ return new class extends Migration
             $table->string('usertoken')->nullable();
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

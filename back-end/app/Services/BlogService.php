@@ -11,12 +11,19 @@ class BlogService
 {
     public function createNewBlog($data)
     {
-        if (empty($data['title']) || empty($data['contentMarkdown']) || empty($data['contentHTML']) ||
-            empty($data['image']) || empty($data['subjectId']) || empty($data['userId'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'title' => 'tiêu đề',
+            'contentMarkdown' => 'nội dung Markdown',
+            'contentHTML' => 'nội dung HTML',
+            'image' => 'hình ảnh',
+            'subjectId' => 'ID chủ đề',
+            'userId' => 'ID người dùng'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         try {
@@ -51,7 +58,8 @@ class BlogService
                     $query->select('value', 'code');
                 }
             ])
-                ->where('statusId', 'S1');
+                ->where('statusId', 'S1')
+                ->orderBy('created_at', 'desc');
 
             if (!empty($data['limit']) && !empty($data['offset'])) {
                 $query->limit($data['limit'])->offset($data['offset']);
@@ -131,12 +139,19 @@ class BlogService
     }
     public function updateBlog($data)
     {
-        if (empty($data['id']) || empty($data['title']) || empty($data['contentMarkdown']) ||
-            empty($data['contentHTML']) || empty($data['image']) || empty($data['subjectId'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'id' => 'ID bài viết',
+            'title' => 'tiêu đề',
+            'contentMarkdown' => 'nội dung Markdown',
+            'contentHTML' => 'nội dung HTML',
+            'image' => 'hình ảnh',
+            'subjectId' => 'ID chủ đề'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         try {

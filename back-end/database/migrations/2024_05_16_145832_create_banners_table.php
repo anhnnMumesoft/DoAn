@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('statusId');
             $table->binary('image'); // Laravel không có kiểu BLOB 'long', sử dụng binary thay thế
             $table->timestamps(); // Tự động tạo các cột createdAt và updatedAt
+            $table->softDeletes();
         });
     }
 

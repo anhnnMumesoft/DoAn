@@ -20,6 +20,7 @@ return new class extends Migration
             $table->bigInteger('originalPrice')->nullable();
             $table->bigInteger('discountPrice')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

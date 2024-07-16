@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class ShopCart extends Model
-{
+{    use SoftDeletes;
     use HasFactory;
     protected $table = 'shopcarts'; // Tên bảng trong database, chỉ cần nếu tên bảng không tuân theo quy tắc đặt tên của Laravel
 

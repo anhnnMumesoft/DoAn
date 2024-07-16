@@ -14,40 +14,67 @@ use Exception;
 class ReceiptService
 {
     public function createNewReceipt($data)
-    {
-        if (empty($data['userId']) || empty($data['supplierId']) || empty($data['productDetailSizeId']) || empty($data['quantity']) || empty($data['price'])) {
+{
+    if (empty($data['userId']) || empty($data['supplierId']) || empty($data['productDetailSizeId']) || empty($data['quantity']) || empty($data['price'])) {
+        return [
+            'errCode' => 2,
+            'errMessage' => 'Missing required parameter!'
+        ];
+    }
+
+    try {
+        // Lấy thông tin ProductDetail dựa trên productDetailSizeId
+        $productDetailSize = ProductDetailSize::find($data['productDetailSizeId']);
+        if (!$productDetailSize) {
             return [
                 'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
+                'errMessage' => 'ProductDetailSize not found!'
             ];
         }
 
-        try {
-            $receipt = Receipt::create([
-                'user_id' => $data['userId'],
-                'supplier_id' => $data['supplierId']
+        $productDetail = ProductDetail::withTrashed()->find($productDetailSize->productdetail_id);
+        if (!$productDetail) {
+            return [
+                'errCode' => 1,
+                'errMessage' => 'ProductDetail not found!'
+            ];
+        }
+
+        // So sánh giá nhập với giá bán (discountPrice)
+        if ($data['price'] > $productDetail->discountPrice) {
+            return [
+                'errCode' => 2,
+                'errMessage' => 'Giá nhập cao hơn giá bán, vui lòng điều chỉnh lại giá bán!'
+            ];
+        }
+
+        // Tạo mới Receipt
+        $receipt = Receipt::create([
+            'user_id' => $data['userId'],
+            'supplier_id' => $data['supplierId']
+        ]);
+
+        if ($receipt) {
+            // Tạo mới ReceiptDetail
+            ReceiptDetail::create([
+                'receipt_id' => $receipt->id,
+                'product_detail_size_id' => $data['productDetailSizeId'],
+                'quantity' => $data['quantity'],
+                'price' => $data['price'],
             ]);
-
-            if ($receipt) {
-                ReceiptDetail::create([
-                    'receipt_id' => $receipt->id,
-                    'product_detail_size_id' => $data['productDetailSizeId'],
-                    'quantity' => $data['quantity'],
-                    'price' => $data['price'],
-                ]);
-            }
-
-            return [
-                'errCode' => 0,
-                'errMessage' => 'ok'
-            ];
-        } catch (Exception $e) {
-            return [
-                'errCode' => -1,
-                'errMessage' => 'Error from server: ' . $e->getMessage()
-            ];
         }
+
+        return [
+            'errCode' => 0,
+            'errMessage' => 'ok'
+        ];
+    } catch (Exception $e) {
+        return [
+            'errCode' => -1,
+            'errMessage' => 'Error from server: ' . $e->getMessage()
+        ];
     }
+}
 
     public function getAllReceipt($data)
     {
@@ -66,8 +93,8 @@ class ReceiptService
             $receipts = $query->get();
 
             foreach ($receipts as $receipt) {
-                $receipt->userData = User::find($receipt->user_id);
-                $receipt->supplierData = Supplier::find($receipt->supplier_id);
+                $receipt->userData = User::withTrashed()->find($receipt->user_id);
+                $receipt->supplierData = Supplier::withTrashed()->find($receipt->supplier_id);
             }
 
             return [
@@ -119,31 +146,57 @@ class ReceiptService
         }
     }
     public function createNewReceiptDetail($data)
-    {
-        if (empty($data['receiptId']) || empty($data['productDetailSizeId']) || empty($data['quantity']) || empty($data['price'])) {
+{
+    if (empty($data['receiptId']) || empty($data['productDetailSizeId']) || empty($data['quantity']) || empty($data['price'])) {
+        return [
+            'errCode' => 2,
+            'errMessage' => 'Missing required parameter!'
+        ];
+    }
+
+    try {
+        // Lấy thông tin ProductDetail dựa trên productDetailSizeId
+        $productDetailSize = ProductDetailSize::find($data['productDetailSizeId']);
+        if (!$productDetailSize) {
             return [
                 'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
+                'errMessage' => 'ProductDetailSize not found!'
             ];
         }
 
-        try {
-            ReceiptDetail::create([
-                'receipt_id' => $data['receiptId'],
-                'product_detail_size_id' => $data['productDetailSizeId'],
-                'quantity' => $data['quantity'],
-                'price' => $data['price'],
-            ]);
-
+        $productDetail = ProductDetail::withTrashed()->find($productDetailSize->productdetail_id);
+        if (!$productDetail) {
             return [
-                'errCode' => 0,
-                'errMessage' => 'ok'
-            ];
-        } catch (Exception $e) {
-            return [
-                'errCode' => -1,
-                'errMessage' => 'Error from server: ' . $e->getMessage()
+                'errCode' => 1,
+                'errMessage' => 'ProductDetail not found!'
             ];
         }
+
+        // So sánh giá nhập với giá bán (discountPrice)
+        if ($data['price'] > $productDetail->discountPrice) {
+            return [
+                'errCode' => 2,
+                'errMessage' => 'Giá nhập cao hơn giá bán, vui lòng điều chỉnh lại giá bán!'
+            ];
+        }
+
+        // Tạo mới ReceiptDetail
+        ReceiptDetail::create([
+            'receipt_id' => $data['receiptId'],
+            'product_detail_size_id' => $data['productDetailSizeId'],
+            'quantity' => $data['quantity'],
+            'price' => $data['price'],
+        ]);
+
+        return [
+            'errCode' => 0,
+            'errMessage' => 'ok'
+        ];
+    } catch (Exception $e) {
+        return [
+            'errCode' => -1,
+            'errMessage' => 'Error from server: ' . $e->getMessage()
+        ];
     }
+}
 }

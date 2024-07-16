@@ -14,15 +14,35 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\ValidationHelper;
+
 class ProductService
 {
     public function createNewProduct($data)
     {
-        if (empty($data['categoryId']) || empty($data['brandId']) || empty($data['image']) || empty($data['nameDetail'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'categoryId' => 'thể loại',
+            'brandId' => 'thương hiệu',
+            'image' => 'hình ảnh',
+            'nameDetail' => 'tên chi tiết',
+            'name' => 'tên',
+            'contentHTML' => 'nội dung HTML',
+            'contentMarkdown' => 'nội dung Markdown',
+            'madeby' => 'nhà sản xuất',
+            'material' => 'chất liệu',
+            'description' => 'mô tả',
+            'originalPrice' => 'giá gốc',
+            'discountPrice' => 'giá giảm',
+            'width' => 'chiều rộng',
+            'height' => 'chiều cao',
+            'sizeId' => 'kích thước',
+            'weight' => 'trọng lượng'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         DB::beginTransaction();
@@ -121,6 +141,10 @@ class ProductService
         if (!empty($data['sortName']) && $data['sortName'] === "true") {
             $query->orderBy('name');
             $queryProductCount->orderBy('name');
+        } else {
+            // Default sorting by created_at descending
+            $query->orderBy('created_at', 'desc');
+            $queryProductCount->orderBy('created_at', 'desc');
         }
 
         // Pagination
@@ -156,11 +180,16 @@ class ProductService
     }
     public function updateProduct($data)
     {
-        if (empty($data['id']) || empty($data['categoryId']) || empty($data['brandId'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'id' => 'ID sản phẩm',
+            'categoryId' => 'thể loại',
+            'brandId' => 'thương hiệu'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         try {
@@ -196,11 +225,14 @@ class ProductService
 
     public function unactiveProduct($data)
     {
-        if (empty($data['id'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'id' => 'ID sản phẩm'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         $product = Product::find($data['id']);
@@ -223,11 +255,14 @@ class ProductService
 
     public function activeProduct($data)
     {
-        if (empty($data['id'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'id' => 'ID sản phẩm'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         $product = Product::find($data['id']);
@@ -300,11 +335,15 @@ class ProductService
 
     public function getAllProductDetailById($data)
     {
-        if (empty($data['id']) || empty($data['limit'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'id' => 'ID sản phẩm',
+            'limit' => 'giới hạn'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         $productDetails = ProductDetail::where('productId', $data['id'])
@@ -330,11 +369,15 @@ class ProductService
 
     public function getAllProductDetailImageById($data)
     {
-        if (empty($data['id']) || empty($data['limit'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'id' => 'ID sản phẩm',
+            'limit' => 'giới hạn'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         $productImages = ProductImage::where('product_detail_id', $data['id'])
@@ -354,11 +397,15 @@ class ProductService
 
     public function getAllProductDetailSizeById($data)
     {
-        if (empty($data['id']) || empty($data['limit']) ) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'id' => 'ID sản phẩm',
+            'limit' => 'giới hạn'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         $productSizes = ProductDetailSize::with('sizeData')
@@ -382,11 +429,16 @@ class ProductService
     }
     public function createNewProductDetailImage($data)
     {
-        if (empty($data['image']) || empty($data['caption']) || empty($data['id'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'image' => 'hình ảnh',
+            'caption' => 'chú thích',
+            'id' => 'ID sản phẩm'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         try {
@@ -438,11 +490,16 @@ class ProductService
     }
     public function updateProductDetailImage($data)
     {
-        if (empty($data['id']) || empty($data['caption']) || empty($data['image'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'id' => 'ID sản phẩm',
+            'caption' => 'chú thích',
+            'image' => 'hình ảnh'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         try {
@@ -526,11 +583,15 @@ class ProductService
     }
     public function updateProductDetailSize($data)
     {
-        if (empty($data['id']) || empty($data['sizeId'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'id' => 'ID sản phẩm',
+            'sizeId' => 'kích thước'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         try {
@@ -560,11 +621,15 @@ class ProductService
     public function createNewProductDetailSize($data)
     {
 
-        if (empty($data['productdetailId']) || empty($data['sizeId'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'productdetailId' => 'ID chi tiết sản phẩm',
+            'sizeId' => 'kích thước'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         try {
@@ -646,11 +711,17 @@ class ProductService
     }
     public function updateProductDetail($data)
     {
-        if (empty($data['id']) || empty($data['nameDetail']) || empty($data['originalPrice']) || empty($data['discountPrice'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'id' => 'ID sản phẩm',
+            'nameDetail' => 'tên chi tiết',
+            'originalPrice' => 'giá gốc',
+            'discountPrice' => 'giá giảm'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
 
         try {
@@ -679,11 +750,18 @@ class ProductService
     }
     public function createNewProductDetail($data)
     {
-        if (empty($data['image']) || empty($data['nameDetail']) || empty($data['originalPrice']) || empty($data['discountPrice']) || empty($data['id'])) {
-            return [
-                'errCode' => 1,
-                'errMessage' => 'Missing required parameter!'
-            ];
+        $requiredFields = [
+            'image' => 'hình ảnh',
+            'nameDetail' => 'tên chi tiết',
+            'originalPrice' => 'giá gốc',
+            'discountPrice' => 'giá giảm',
+            'id' => 'ID sản phẩm'
+        ];
+    
+        $validationResult = ValidationHelper::validateRequiredFields($data, $requiredFields);
+    
+        if ($validationResult) {
+            return $validationResult;
         }
         try {
             $productDetail = ProductDetail::create([
@@ -780,8 +858,10 @@ class ProductService
             $processedProducts = [];
             if ($recommendedProducts->isNotEmpty()) {
                 foreach ($recommendedProducts as $product1) {
-                    $product = Product::with(['brandData', 'categoryData', 'statusData'])
-                                        ->where('id',$product1->id)->first();
+                        $product = Product::with(['brandData', 'categoryData', 'statusData'])
+                                            ->where('id',$product1->id)
+                                            ->where('statusId', 'S1')
+                                            ->first();
 
                     $productDetails = ProductDetail::where('productId', $product->id)->get();
 
@@ -818,6 +898,7 @@ class ProductService
     {
         try {
             $products = Product::with(['brandData', 'categoryData', 'statusData'])
+                ->where('statusId', 'S1')
                 ->orderBy('view', 'desc')
                 ->limit($limit)
                 ->get();
@@ -855,6 +936,7 @@ class ProductService
     {
         try {
             $products = Product::with(['brandData', 'categoryData', 'statusData'])
+                ->where('statusId', 'S1')
                 ->orderBy('created_at', 'desc')
                 ->limit($limit)
                 ->get();

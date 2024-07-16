@@ -367,7 +367,7 @@ class VoucherService
             if ($voucherUsed) {
                 return [
                     'errCode' => 2,
-                    'errMessage' => 'Voucher already saved in the repository!'
+                    'errMessage' => 'Bạn đã lưu voucher này rồi!'
                 ];
             } else {
                 VoucherUsed::create([
